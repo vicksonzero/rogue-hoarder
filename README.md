@@ -7,7 +7,7 @@ Manage your live priorities vs earnings in this dark adventure game
 
 WASD, ZQSD, or Arrow keys to move.
 
-Press J to attack, S (while on ground) to block with shield
+Press J or K to attack, S (while on ground) to block with shield
 
 ------------------------------------
 
@@ -24,6 +24,8 @@ https://github.com/xem/mini2DPlatformer
 ## js13k Webpack Starter
 
 https://github.com/sz-piotr/js13k-webpack-starter
+
+(Notes: Size is 889 bytes (6.68%) without game code)
 
 ## What is it?
 

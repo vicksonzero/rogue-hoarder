@@ -58,14 +58,19 @@ const map = [
     "111111111111111111111111111111111111111111111111111111111111111111111111111111",
 ];
 
+const unlocks = {
+    torch: false, // 720x480 vs 480x320
+};
+
+
 const tile_w = 32;  // tiles width in px
 const tile_h = 32;  // tiles height in px
 const map_w = map[0].length;  // map width in tiles
 const map_h = map.length;     // map height in tiles
 
 // Hero
-let hero_w = .8;  // hero width in tiles 
-let hero_h = 1.3;  // hero height in tiles
+let hero_w = .6;  // hero width in tiles 
+let hero_h = 1;  // hero height in tiles
 let hero_x = 10;   // X position in tiles
 let hero_y = 2;   // Y position in tiles
 let hero_vy = 0;  // Y speed
@@ -84,10 +89,40 @@ const input = {
     d: 0,
     l: 0,
     r: 0,
+    a: 0, /* attack */
+    c1: 0, /* cheats */
+    c2: 0, /* cheats */
 };
-window.onkeydown = window.onkeyup = e => {
-    input['lurdl*d*l*ur*u'[(e.which + 3) % 20]] = e.type[3] < 'u';
+
+const keyHandler = ({ keyCode: w, type: t }) => {
+    // console.log("keyHandler", w, t);
+
+    if (w == 87 /*W*/ || w == 90 /*Z*/ || w == 38 /*↑*/) {
+        input.u = +(t[3] < 'u')
+    }
+    if (w == 83 /*S*/ || w == 40 /*↓*/) {
+        input.d = +(t[3] < 'u')
+    }
+    if (w == 65 /*A*/ || w == 81 /*Q*/ || w == 37 /*←*/) {
+        input.l = +(t[3] < 'u')
+    }
+    if (w == 68 /*D*/ || w == 39 /*→*/) {
+        input.r = +(t[3] < 'u')
+    }
+    if (w == 74 /*J*/ || w == 75 /*K*/) {
+        input.a = +(t[3] < 'u')
+    }
+    if (w == 48 /*0*/) {
+        input.c1 = +(t[3] < 'u')
+        if (input.c1) {
+            unlocks.torch = !unlocks.torch;
+            a.width = (unlocks.torch ? 720 : 480); // 720x480 vs 480x320
+            a.height = (unlocks.torch ? 480 : 320);
+        }
+    }
 };
+window.addEventListener('keydown', keyHandler);
+window.addEventListener('keyup', keyHandler);
 
 // Game loop (60 fps)
 setInterval(() => {
@@ -128,11 +163,11 @@ setInterval(() => {
     }
 
     // Get the value of the tiles at the bottom corners of the hero
-    const tile1 = map[Math.floor(hero_y + hero_h)][Math.floor(hero_x)];
-    const tile2 = map[Math.floor(hero_y + hero_h)][Math.floor(hero_x + hero_w - .1)];
+    const tile1 = +map[Math.floor(hero_y + hero_h)][Math.floor(hero_x)];
+    const tile2 = +map[Math.floor(hero_y + hero_h)][Math.floor(hero_x + hero_w - .1)];
 
     // If this tile is solid, put the hero on top of it (he's grounded)
-    if (tile1 == '1' || tile2 == '1') {
+    if (tile1 == 1 || tile2 == 1) {
         hero_y = Math.floor(hero_y + hero_h) - hero_h;
         hero_grounded = 1;
         hero_vy = 0;
@@ -145,11 +180,11 @@ setInterval(() => {
         hero_x = Math.max(hero_x, 0);
 
         // Get the value of the tiles at the left corners of the hero
-        const tile1 = map[Math.floor(hero_y)][Math.floor(hero_x)];
-        const tile2 = map[Math.floor(hero_y + hero_h - .1)][Math.floor(hero_x)];
+        const tile1 = +map[Math.floor(hero_y)][Math.floor(hero_x)];
+        const tile2 = +map[Math.floor(hero_y + hero_h - .1)][Math.floor(hero_x)];
 
         // If this tile is solid, put the hero on the right side of it
-        if (tile1 == '1' || tile2 == '1') {
+        if (tile1 == 1 || tile2 == 1) {
             hero_x = Math.ceil(hero_x);
         }
     }
@@ -160,11 +195,11 @@ setInterval(() => {
         hero_x = Math.min(map_w - 1, hero_x);
 
         // Get the value of the tiles at the left corners of the hero
-        const tile1 = map[Math.floor(hero_y)][Math.floor(hero_x + hero_w)];
-        const tile2 = map[Math.floor(hero_y + hero_h - .1)][Math.floor(hero_x + hero_w)];
+        const tile1 = +map[Math.floor(hero_y)][Math.floor(hero_x + hero_w)];
+        const tile2 = +map[Math.floor(hero_y + hero_h - .1)][Math.floor(hero_x + hero_w)];
 
         // If this tile is solid, put the hero on the right side of it
-        if (tile1 == '1' || tile2 == '1') {
+        if (tile1 == 1 || tile2 == 1) {
             hero_x = Math.floor(hero_x + hero_w) - hero_w;
         }
     }
@@ -184,25 +219,27 @@ setInterval(() => {
     if (hero_vy < 0) {
 
         // Get the value of the tiles at the top corners of the hero
-        const tile1 = map[Math.floor(hero_y)][Math.floor(hero_x)];
-        const tile2 = map[Math.floor(hero_y)][Math.floor(hero_x + hero_w - .1)];
+        const tile1 = +map[Math.floor(hero_y)][Math.floor(hero_x)];
+        const tile2 = +map[Math.floor(hero_y)][Math.floor(hero_x + hero_w - .1)];
 
         // If this tile is solid, put the hero on the bottom side of it and make him fall
-        if (tile1 == '1' || tile2 == '1') {
+        if (tile1 == 1 || tile2 == 1) {
             hero_y = Math.ceil(hero_y);
             hero_vy = 0;
         }
     }
 
     // Compute scroll
-    if (hero_x > 7 && hero_x < map_w - 7) scroll_x = hero_x - 7;
-    if (hero_y > 5 && hero_y < map_h - 5) scroll_y = hero_y - 5;
+    const cam_x = (!unlocks.torch ? 7 : 9.5);
+    const cam_y = (!unlocks.torch ? 5 : 8);
+    if (hero_x > cam_x && hero_x < map_w - cam_x) scroll_x = hero_x - cam_x;
+    if (hero_y > cam_y && hero_y < map_h - cam_y) scroll_y = hero_y - cam_y;
 
     // Draw map
     const draw_x = Math.floor(scroll_x);
     const draw_y = Math.floor(scroll_y);
-    for (let x = draw_x; x < map_w && x <= draw_x + 20; x++) {
-        for (let y = draw_y; y < map_h && y <= draw_y + 20; y++) {
+    for (let x = draw_x; x < map_w && x <= draw_x + 23; x++) {
+        for (let y = draw_y; y < map_h && y <= draw_y + 16; y++) {
             const tile = map[y][x];
             if (tile == '1') {
                 c.fillStyle = "green";
@@ -215,6 +252,7 @@ setInterval(() => {
     // Draw hero
     c.fillStyle = "orange";
     c.fillRect((hero_x - scroll_x) * tile_w, (hero_y - scroll_y) * tile_h, hero_w * tile_w, hero_h * tile_h);
+
 
 }, 16);
 
