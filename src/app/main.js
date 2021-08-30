@@ -96,29 +96,28 @@ const input = {
 
 const keyHandler = ({ keyCode: w, type: t }) => {
     // console.log("keyHandler", w, t);
+    const keyMap = {
+        87: 'u', /*W*/
+        90: 'u', /*Z*/
+        38: 'u', /*↑*/
+        83: 'd', /*S*/
+        40: 'd', /*↓*/
+        65: 'l', /*A*/
+        81: 'l', /*Q*/
+        37: 'l', /*←*/
+        68: 'r', /*D*/
+        39: 'r', /*→*/
+        74: 'a', /*J*/
+        75: 'a', /*K*/
+        48: 'c1', /*0*/
+    };
 
-    if (w == 87 /*W*/ || w == 90 /*Z*/ || w == 38 /*↑*/) {
-        input.u = +(t[3] < 'u')
-    }
-    if (w == 83 /*S*/ || w == 40 /*↓*/) {
-        input.d = +(t[3] < 'u')
-    }
-    if (w == 65 /*A*/ || w == 81 /*Q*/ || w == 37 /*←*/) {
-        input.l = +(t[3] < 'u')
-    }
-    if (w == 68 /*D*/ || w == 39 /*→*/) {
-        input.r = +(t[3] < 'u')
-    }
-    if (w == 74 /*J*/ || w == 75 /*K*/) {
-        input.a = +(t[3] < 'u')
-    }
-    if (w == 48 /*0*/) {
-        input.c1 = +(t[3] < 'u')
-        if (input.c1) {
-            unlocks.torch = !unlocks.torch;
-            a.width = (unlocks.torch ? 720 : 480); // 720x480 vs 480x320
-            a.height = (unlocks.torch ? 480 : 320);
-        }
+    input[keyMap[w]] = +(t[3] < 'u');
+
+    if (input.c1) {
+        unlocks.torch = !unlocks.torch;
+        a.width = (unlocks.torch ? 720 : 480); // 720x480 vs 480x320
+        a.height = (unlocks.torch ? 480 : 320);
     }
 };
 window.addEventListener('keydown', keyHandler);
