@@ -21,23 +21,24 @@ Manage your live priorities vs earnings in this dark adventure game
 - [ ] procedural loots on fixed map layout
 - [ ] poking sword
 - [ ] shooting magic
-- [ ] inventory queue linked to hp
-- [ ] reorganize items in queue
+- [x] inventory queue linked to hp
+- [x] reorganize items in queue
 - [ ] items to get (treasure box, sword and wands)
 - [ ] score system
-- [ ] toggle off abilities by taking damage
+- [x] toggle off abilities by taking damage
 - [x] climbing walls
 - [ ] dash
-- [ ] getting items and inventory managements (no dnd)
-- [ ] discarding health card unlocks more health cards
-- [ ] discard multiple health cards to unlock a card
-friends and family and doctor
-- [ ] after playtest, optional curse of binding and optional losing self or mind
-  - curses occur if player hasn't been injured for certain time
+- [ ] getting items
+- [x] discarding health card unlocks more health cards
+- [x] discard multiple health cards to unlock a card
+- [ ] friends and family and doctor
 - [ ] MVP done
-- [ ] procedural dungeon?
-- [ ] oneway platform
-- [ ] mobile ui?
+- [ ] after playtest,
+  - [ ] optional curse of binding and optional losing self or mind
+    - curses occur if player hasn't been injured for certain time
+  - [ ] procedural dungeon?
+  - [ ] oneway platform
+  - [ ] mobile ui?
 
 
 ------------------------------------
