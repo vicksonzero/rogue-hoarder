@@ -71,7 +71,7 @@ const map_home = [
     "10000000000000000000000000000001",
     "10000000000000000000011111100001",
     "10000111000000000000000000000000",
-    "1030000000000000000000000000000D",
+    "10d0000000000000000000000000000D",
     "11111111111111111111111111111111",
 ];
 
@@ -88,6 +88,7 @@ let map = (scene == 'h' ? map_home : map_dungeon);
 let map_w = map[0].length;  // map width in tiles
 let map_h = map.length;     // map height in tiles
 let entities = [];
+let frameID = 0;
 
 window['getEntities'] = () => entities;
 
@@ -205,6 +206,7 @@ window.addEventListener('keyup', keyHandler);
 
 // Game loop (60 fps)
 setInterval(() => {
+    frameID++;
 
     // Clear
     a.width ^= 0;
@@ -222,8 +224,6 @@ setInterval(() => {
     //
     // [hero_x, hero_y + hero_h]      [hero_x + hero_w, hero_y + hero_h]
 
-    // Reset grounded state
-    hero_grounded = 0;
 
     // Apply gravity to Y acceleration, Y acceleration to Y speed and Y speed to Y position
     hero_vy += g;
@@ -248,7 +248,8 @@ setInterval(() => {
     // If this tile is solid, put the hero on top of it (he's grounded)
     if (tile1 == 1 || tile2 == 1) {
         hero_y = Math.floor(hero_y + hero_h) - hero_h;
-        hero_grounded = 1;
+        hero_grounded = frameID + 5;
+        hero_can_jump = 1;
         hero_vy = 0;
         hero_ay = 0;
     }
@@ -308,35 +309,36 @@ setInterval(() => {
         }
 
         // If up key is pressed and the hero is grounded, jump
-        if (input.u && hero_grounded && hero_can_jump) {
+        if (input.u && hero_vy >= 0 && hero_grounded >= frameID && hero_can_jump) {
+            // console.log('jump', hero_grounded, frameID);
             hero_vy = -.35;
             hero_can_jump = 0;
         }
 
-        // If up key is released, allow hero to jump again next time he's grounded
-        if (!input.u) {
-            hero_can_jump = 1;
-        }
-
-
         // draw other entities
-        entities.forEach(({ type, x, y, w, h }) => {
+        for (let index = 0; index < entities.length; index++) {
+            const { type, x, y, w, h } = entities[index];
+
             const hasCollision = (hero_x < x + w &&
                 hero_x + hero_w > x &&
                 hero_y < y + h &&
                 hero_y + hero_h > y);
 
-            if (!hasCollision) return;
+            if (!hasCollision) continue;
 
             if (type == 'D') {
                 changeMap(scene == 'h' ? 'd' : 'h');
+            } else if (type == '3') {
+                console.log('spike!');
+                entities.splice(index, 1);
+                index--;
             }
-        });
+        }
     }
 
     // Compute scroll
     const cam_ww = (!unlocks.torch ? 7 : 9.5);
-    const cam_hh = (!unlocks.torch ? 5 : 8);
+    const cam_hh = (!unlocks.torch ? 5 : 7.5);
     scroll_x = Math.max(0, Math.min(hero_x - cam_ww, map_w - cam_ww - cam_ww - 1));
     scroll_y = Math.max(0, Math.min(hero_y - cam_hh, map_h - cam_hh - cam_hh));
 
@@ -380,8 +382,13 @@ setInterval(() => {
     c.fillRect((hero_x - scroll_x) * tile_w, (hero_y - scroll_y) * tile_h, hero_w * tile_w, hero_h * tile_h);
 
 
-    if (transition_progress <= 0) {
-    } else {
+    if (transition_progress < 0) {
+        transition_progress += 16;
+
+        if (transition_progress >= 0) {
+            transition_progress = 0;
+        }
+    } else if (transition_progress > 0) {
         c.fillStyle = `rgba(0,0,0,${(transition_progress / 1000).toFixed(1)})`;
         c.fillRect(0, 0, a.width, a.height);
         c.fillStyle = 'white';
@@ -391,6 +398,10 @@ setInterval(() => {
         c.font = `16px Arial`;
         c.fillText(scene == 'h' ? `Day 1` : `Night 1`, a.width / 2, a.height / 2 + 32);
         transition_progress -= 16;
+
+        if (transition_progress <= 0) {
+            transition_progress = 0;
+        }
     }
 
 }, 16);
