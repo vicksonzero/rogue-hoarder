@@ -9,6 +9,37 @@ WASD, ZQSD, or Arrow keys to move.
 
 Press J or K to attack, S (while on ground) to block with shield
 
+
+
+# Implementation plans
+
+- [x] basic platformer
+- [x] moving camera
+- [x] switch between hub world and dungeon
+- [ ] procedural enemies by level
+- [x] procedural traps by level
+- [ ] procedural loots on fixed map layout
+- [ ] poking sword
+- [ ] shooting magic
+- [ ] inventory queue linked to hp
+- [ ] reorganize items in queue
+- [ ] items to get (treasure box, sword and wands)
+- [ ] score system
+- [ ] toggle off abilities by taking damage
+- [x] climbing walls
+- [ ] dash
+- [ ] getting items and inventory managements (no dnd)
+- [ ] discarding health card unlocks more health cards
+- [ ] discard multiple health cards to unlock a card
+friends and family and doctor
+- [ ] after playtest, optional curse of binding and optional losing self or mind
+  - curses occur if player hasn't been injured for certain time
+- [ ] MVP done
+- [ ] procedural dungeon?
+- [ ] oneway platform
+- [ ] mobile ui?
+
+
 ------------------------------------
 
 # Credits / Starter projects

@@ -79,7 +79,7 @@ const map_home = [
 
 let can_do_torch = false; // 720x480 vs 480x320 screen
 let can_do_dash = false;
-let can_do_climb = true;
+let can_do_climb = false;
 let can_do_sword = false;
 
 
