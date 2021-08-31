@@ -427,7 +427,7 @@ const pauseGame = () => {
 };
 
 const updateInventoryList = () => {
-    l.innerHTML = inventory.map(({ n, i }, _i) => `<div class=card data-c=${_i} onclick="prioritize(${_i})">${i}<br>${n}</div>`).join('') + '<div>←💀</div>';
+    l.innerHTML = inventory.map(({ n, i }, _i) => `<div class=card data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`).join('') + '<div>←💀</div>';
     h.innerHTML = inventory.map(({ i }, _i) => `<div class=card data-c=${_i}>${i}</div>`).join('');
 };
 updateInventoryList();
@@ -488,8 +488,15 @@ const updateAbilityList = () => {
     can_do_wand = (inventory.some(card => card.n == 'wand'));
     can_do_shield = (inventory.some(card => card.n == 'shield'));
     can_do_torch = (inventory.some(card => card.n == 'torch'));
+
+    update_can_do_torch();
+
 };
 
+const update_can_do_torch = () => {
+    a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
+    a.height = (can_do_torch ? 480 : 320);
+}
 
 // World
 const g1 = 0.012;    // gravity in tiles/frame²
@@ -536,8 +543,7 @@ const keyHandler = (e) => {
 
     if (input.c1 && 'c1' == keyMap[w]) {
         can_do_torch = !can_do_torch;
-        a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
-        a.height = (can_do_torch ? 480 : 320);
+        update_can_do_torch();
         input.c1 = 0;
     }
     if (input.s && 's' == keyMap[w]) {
@@ -698,8 +704,8 @@ setInterval(() => {
     }
 
     // Compute scroll
-    const cam_ww = (!can_do_torch ? 7 : 9.5);
-    const cam_hh = (!can_do_torch ? 5 : 7.5);
+    const cam_ww = (can_do_torch ? 10.75 : 7);
+    const cam_hh = (can_do_torch ? 7.5 : 5);
     scroll_x = Math.max(0, Math.min(hero_x - cam_ww, map_w - cam_ww - cam_ww - 1));
     scroll_y = Math.max(0, Math.min(hero_y - cam_hh, map_h - cam_hh - cam_hh));
 
