@@ -87,17 +87,11 @@ let transition_to = 'h'; // see `scene`
 let map = (scene == 'h' ? map_home : map_dungeon);
 let map_w = map[0].length;  // map width in tiles
 let map_h = map.length;     // map height in tiles
+let entities = [];
 
-const start_transition = (_to) => {
-    transition_progress = 1000;
-    transition_to = _to;
-}
-const changeMap = (_new_map) => {
-    scene = _new_map;
-    map = (scene == 'h' ? map_home : map_dungeon);
-    map_w = map[0].length;  // map width in tiles
-    map_h = map.length;     // map height in tiles
-}
+window['getEntities'] = () => entities;
+
+
 
 const tile_w = 32;  // tiles width in px
 const tile_h = 32;  // tiles height in px
@@ -111,6 +105,37 @@ let hero_vy = 0;  // Y speed
 let hero_ay = 0;  // Y acceleration
 let hero_grounded = 0; // hero is grounded
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
+
+const start_transition = (_to) => {
+}
+const changeMap = (_new_map) => {
+    scene = _new_map;
+    map = (scene == 'h' ? map_home : map_dungeon);
+    map_w = map[0].length;  // map width in tiles
+    map_h = map.length;     // map height in tiles
+    entities = [];
+    if (scene == 'd') {
+        hero_x = 9;
+        hero_y = 5;
+    } else {
+        hero_x = 9;
+        hero_y = 5;
+    }
+
+    for (let y = 0; y < map_h; y++) {
+        for (let x = 0; x < map_w; x++) {
+            const tile = map[y][x];
+            if (tile == 'D') {
+                entities.push({ type: 'D', x: x + 0.1, y: y - 0.6, w: 0.8, h: 1.6 })
+            }
+        }
+    }
+
+    transition_progress = 2000;
+
+}
+changeMap('h');
+
 
 // World
 const g = 0.015;    // gravity in tiles/frame²
@@ -249,7 +274,7 @@ setInterval(() => {
         // If right key is pressed, go right
         if (input.r) {
             hero_x += .1;
-            hero_x = Math.min(map_w - 1, hero_x);
+            hero_x = Math.min(map_w - hero_w, hero_x);
 
             // Get the value of the tiles at the left corners of the hero
             const tile1 = +map[Math.floor(hero_y)][Math.floor(hero_x + hero_w)];
@@ -271,13 +296,28 @@ setInterval(() => {
         if (!input.u) {
             hero_can_jump = 1;
         }
+
+
+        // draw other entities
+        entities.forEach(({ type, x, y, w, h }) => {
+            const hasCollision = (hero_x < x + w &&
+                hero_x + hero_w > x &&
+                hero_y < y + h &&
+                hero_y + hero_h > y);
+
+            if (!hasCollision) return;
+
+            if (type == 'D') {
+                changeMap(scene == 'h' ? 'd' : 'h');
+            }
+        });
     }
 
     // Compute scroll
-    const cam_x = (!unlocks.torch ? 7 : 9.5);
-    const cam_y = (!unlocks.torch ? 5 : 8);
-    if (hero_x > cam_x && hero_x < map_w - cam_x) scroll_x = hero_x - cam_x;
-    if (hero_y > cam_y && hero_y < map_h - cam_y) scroll_y = hero_y - cam_y;
+    const cam_ww = (!unlocks.torch ? 7 : 9.5);
+    const cam_hh = (!unlocks.torch ? 5 : 8);
+    scroll_x = Math.max(0, Math.min(hero_x - cam_ww, map_w - cam_ww - cam_ww - 1));
+    scroll_y = Math.max(0, Math.min(hero_y - cam_hh, map_h - cam_hh - cam_hh));
 
     // Draw map
     const draw_x = Math.floor(scroll_x);
@@ -292,6 +332,7 @@ setInterval(() => {
             }
         }
     }
+    // // draw coordinates
     // for (let x = draw_x; x < map_w && x <= draw_x + 23; x++) {
     //     for (let y = draw_y; y < map_h && y <= draw_y + 16; y++) {
     //         const tile = map[y][x];
@@ -299,6 +340,15 @@ setInterval(() => {
     //         c.fillText(`[${y}, ${x}]`, (x - scroll_x) * tile_w, (y - scroll_y) * tile_h)
     //     }
     // }
+    // draw other entities
+    entities.forEach(({ type, x, y, w, h }) => {
+        if (type == 'D') {
+            c.fillStyle = "brown";
+            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            c.fillStyle = "black";
+            c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
+        }
+    });
 
     // Draw hero
     c.fillStyle = "orange";
@@ -306,9 +356,6 @@ setInterval(() => {
 
 
     if (transition_progress <= 0) {
-        if (transition_to != scene) {
-            changeMap(transition_to);
-        }
     } else {
         c.fillStyle = `rgba(0,0,0,${(transition_progress / 1000).toFixed(1)})`;
         c.fillRect(0, 0, a.width, a.height);
