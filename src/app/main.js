@@ -94,8 +94,10 @@ let frameID = 0;
 window['test'] = {
     get entities() { return entities },
     get cards() { return cards },
+    //@ts-ignore
     get tiers() { return tiers.map(tier => tier.map(i => ({ ...cards[i], i }))) },
-    get rare() { return rare },
+    //@ts-ignore
+    get rare() { return rare.map(tier => tier.map(i => ({ ...cards[i], i }))) },
 };
 /* #EndIfDev */
 
