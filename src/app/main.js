@@ -77,9 +77,12 @@ const map_home = [
 
 
 
-const unlocks = {
-    torch: false, // 720x480 vs 480x320
-};
+let can_do_torch = false; // 720x480 vs 480x320 screen
+let can_do_dash = false;
+let can_do_climb = true;
+let can_do_sword = false;
+
+
 let scene = 'h'; // h=home, d=dungeon, dp=dungeon-pause
 let transition_progress = 1000; // ms, count till 0
 let transition_to = 'h'; // see `scene`
@@ -368,9 +371,9 @@ const keyHandler = ({ keyCode: w, type: t }) => {
     input[keyMap[w]] = +(t[3] < 'u');
 
     if (input.c1) {
-        unlocks.torch = !unlocks.torch;
-        a.width = (unlocks.torch ? 720 : 480); // 720x480 vs 480x320
-        a.height = (unlocks.torch ? 480 : 320);
+        can_do_torch = !can_do_torch;
+        a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
+        a.height = (can_do_torch ? 480 : 320);
     }
 };
 window.addEventListener('keydown', keyHandler);
@@ -462,6 +465,10 @@ setInterval(() => {
             if (tile1 == 1 || tile2 == 1) {
                 hero_x = Math.ceil(hero_x);
                 // console.log('input.l =4=', Math.floor(hero_y + hero_h - .1), Math.floor(hero_x));
+
+                if (can_do_climb) {
+                    hero_vy = -.07;
+                }
             }
         }
 
@@ -477,6 +484,10 @@ setInterval(() => {
             // If this tile is solid, put the hero on the right side of it
             if (tile1 == 1 || tile2 == 1) {
                 hero_x = Math.floor(hero_x + hero_w) - hero_w;
+
+                if (can_do_climb) {
+                    hero_vy = -.07;
+                }
             }
         }
 
@@ -512,8 +523,8 @@ setInterval(() => {
     }
 
     // Compute scroll
-    const cam_ww = (!unlocks.torch ? 7 : 9.5);
-    const cam_hh = (!unlocks.torch ? 5 : 7.5);
+    const cam_ww = (!can_do_torch ? 7 : 9.5);
+    const cam_hh = (!can_do_torch ? 5 : 7.5);
     scroll_x = Math.max(0, Math.min(hero_x - cam_ww, map_w - cam_ww - cam_ww - 1));
     scroll_y = Math.max(0, Math.min(hero_y - cam_hh, map_h - cam_hh - cam_hh));
 
