@@ -69,6 +69,21 @@ body {
   font-size: 200%;
   font-style: normal;
 }
+.c-0{
+  background: rgb(236, 81, 81);
+}
+.c-1{
+  background: rgb(240, 241, 131);
+}
+.c-2{
+  background: rgb(140, 233, 140);
+}
+.c-3{
+  background: rgb(151, 250, 255);
+}
+.c-i1{
+  background: #fff;
+}
 #h .card {
   width: 20px;
   height: 28px;

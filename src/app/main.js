@@ -427,8 +427,8 @@ const pauseGame = () => {
 };
 
 const updateInventoryList = () => {
-    l.innerHTML = inventory.map(({ n, i }, _i) => `<div class=card data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`).join('') + '<div>←💀</div>';
-    h.innerHTML = inventory.map(({ i }, _i) => `<div class=card data-c=${_i}>${i}</div>`).join('');
+    l.innerHTML = inventory.map(({ n, i, t }, _i) => `<div class="card c-${t}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`).join('') + '<div>←💀</div>';
+    h.innerHTML = inventory.map(({ i, t }, _i) => `<div class="card c-${t}" data-c=${_i}>${i}</div>`).join('');
 };
 updateInventoryList();
 
