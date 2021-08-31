@@ -12,10 +12,11 @@ body {
 }
 
 .container {
-  display: flex;
-  flex-direction: column;
-  align-content: stretch;
+  width: 720px;
   height: 100%;
+  margin: 0 auto;
+  padding: 1em;
+  box-sizing: border-box;
 }
 
 #game {
@@ -45,6 +46,10 @@ body {
   color: #fff;
   padding: 12px;
 }
+#excess-note {
+  display: none;
+  color: gold;
+}
 #list {
   display: flex;
   flex-direction: row;
@@ -64,24 +69,25 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  user-select: none;
 }
-.card i{
+.card i {
   font-size: 200%;
   font-style: normal;
 }
-.c-0{
+.c-0 {
   background: rgb(236, 81, 81);
 }
-.c-1{
+.c-1 {
   background: rgb(240, 241, 131);
 }
-.c-2{
+.c-2 {
   background: rgb(140, 233, 140);
 }
-.c-3{
+.c-3 {
   background: rgb(151, 250, 255);
 }
-.c-i1{
+.c-i1 {
   background: #fff;
 }
 #h .card {

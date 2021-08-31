@@ -5,12 +5,16 @@ const a = document.querySelector("canvas");
 
 /** @type HTMLDivElement */
 const h = document.querySelector("#h");
+
+/** @type HTMLDivElement */
+const xn = document.querySelector("#excess-note");
 /** @type HTMLDivElement */
 const l = document.querySelector("#list");
 /** @type HTMLDivElement */
 const p = document.querySelector("#p");
 p.style.display = 'none';
 const c = a.getContext("2d");
+c.imageSmoothingEnabled = false;
 
 // cache
 const a_cache = document.createElement("canvas");
@@ -268,6 +272,7 @@ const rare = [
     /* 3 = legendary */[39, 40],
 ];
 
+
 for (let i = 0; i < tiers.length; i++) {
     const tier = tiers[i];
     for (const id of tier) {
@@ -308,7 +313,7 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} y
    @property {number} w
    @property {number} h
-   @property {number} h
+   @property {IItem} item
  */
 
 /** @type {IEnemyDef[]} */
@@ -499,9 +504,12 @@ let hero_ay = 0;  // Y acceleration
 let hero_grounded = 0; // hero is grounded
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
 let hero_tier = 3; // used to unlock health cards
-let inventory = [3, 0, 0, 0, 0].map(i => (cards[i]));
+let inventory = [3, 0, 0, 0].map(i => (cards[i]));
+let inventory_size = inventory.length;
 let lostAbilities = [];
 
+let scroll_x = 0; // X scroll in tiles
+let scroll_y = 0; // X scroll in tiles
 
 const changeMap = (_new_map) => {
     scene = _new_map;
@@ -520,6 +528,7 @@ const changeMap = (_new_map) => {
     const doorCandidates = [];
     const spikeCandidates = [];
     const spawnCandidates = [];
+
     for (let y = 0; y < map_h; y++) {
         for (let x = 0; x < map_w; x++) {
             const tile = map[y][x];
@@ -540,23 +549,27 @@ const changeMap = (_new_map) => {
         hero_x = x;
         hero_y = y;
     }
+
     const doorCount = 3;
+    const spikeCount = 10;
+    const enemyCount = 10;
+    const treasureCount = 10;
+
     for (let i = 0; doorCandidates.length && i < doorCount; i++) {
         const { x, y } = doorCandidates.splice(Math.floor(Math.random() * doorCandidates.length), 1)[0];
         entities.push({ type: 'D', x: x + 0.1, y: y - 0.6, w: 0.8, h: 1.6 });
     }
-    const spikeCount = 10;
     for (let i = 0; spikeCandidates.length && i < spikeCount; i++) {
         const { x, y } = spikeCandidates.splice(Math.floor(Math.random() * spikeCandidates.length), 1)[0];
         entities.push({ type: '3', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6 });
     }
-    const enemyCount = 10;
     entities = entities.concat(spawnEnemy(spawnCandidates, enemyCount));
 
-    const treasureCount = 10;
     for (let i = 0; spawnCandidates.length && i < treasureCount; i++) {
         const { x, y } = spawnCandidates.splice(Math.floor(Math.random() * spawnCandidates.length), 1)[0];
-        entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6 });
+        const rarity = randomFrom([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2]);
+        const item = cards[randomFrom(rare[rarity])];
+        entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, item });
     }
 
     transition_progress = 2000;
@@ -572,26 +585,28 @@ const pauseGame = () => {
 
         p.style.display = 'block';
         h.style.display = 'none';
+        xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
         updateInventoryList();
     } else {
+        inventory.length = inventory_size;
         transition_progress = 0;
 
+        updateAbilityList();
+        updateInventoryList();
         p.style.display = 'none';
         h.style.display = 'flex';
     }
 };
 
 const updateInventoryList = () => {
-    l.innerHTML = inventory.map(({ n, i, t }, _i) => `<div class="card c-${t}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`).join('') + '<div>←💀</div>';
+    l.innerHTML = (inventory.slice(0, inventory_size)
+        .map(({ n, i, t }, _i) => `<div class="card c-${t}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
+        .join('') +
+        '<div>←💀</div>' +
+        (inventory.length <= inventory_size ? '' : `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${inventory[inventory_size].n}</div><div>←🗑</div>`)
+    );
     h.innerHTML = inventory.map(({ i, t }, _i) => `<div class="card c-${t}" data-c=${_i}>${i}</div>`).join('');
 };
-updateInventoryList();
-
-window['prioritize'] = (i) => {
-    const item = inventory.splice(i, 1)[0];
-    inventory.push(item);
-    updateInventoryList();
-}
 
 const spawnEnemy = (spawnCandidates, enemyCount) => {
     let result = [];
@@ -636,8 +651,25 @@ const takeDamage = () => {
         lostAbilities.push(lastItem);
     }
     inventory.pop();
+    inventory_size = inventory.length;
     updateAbilityList();
     updateInventoryList();
+};
+
+const randomFrom = (arr) => {
+    return arr[~~(Math.random() * arr.length)];
+}
+
+const addItem = (item) => {
+    const id = inventory.findIndex(item => item.n == '');
+    if (id < 0) {
+        inventory.push(item);
+        pauseGame();
+    } else {
+        inventory[id] = item;
+        updateAbilityList();
+        updateInventoryList();
+    }
 };
 
 const updateAbilityList = () => {
@@ -654,8 +686,8 @@ const updateAbilityList = () => {
         tiers[hero_tier].forEach(id => {
             inventory.unshift(cards[id]);
         });
+        inventory_size = inventory.length;
     }
-
 
     can_do_run = (hero_tier >= 2 || inventory.some(card => card.n == 'run'));
     can_do_jump = (hero_tier >= 2 || inventory.some(card => card.n == 'jump'));
@@ -697,9 +729,6 @@ const fillRectC = (/** @type {CanvasRenderingContext2D} */ c, cx, cy, w, h, fill
     c.fill();
     if (stroke) { c.strokeStyle = stroke; c.stroke(); }
 }
-
-let scroll_x = 0; // X scroll in tiles
-let scroll_y = 0; // X scroll in tiles
 
 // Inputs (see https://xem.github.io/articles/jsgamesinputs.html)
 const input = {
@@ -757,6 +786,8 @@ window.addEventListener('keydown', keyHandler);
 window.addEventListener('keyup', keyHandler);
 
 
+// main
+
 changeMap('h');
 
 a_cache.width = map_dungeon[0].length * tile_w;
@@ -769,6 +800,13 @@ map_dungeon.forEach((row, y) => row.split('').forEach((tile, x) => {
         a_cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
     }
 }));
+updateInventoryList();
+
+window['prioritize'] = (i) => {
+    const item = inventory.splice(i, 1)[0];
+    inventory.push(item);
+    updateInventoryList();
+}
 
 // Game loop (60 fps)
 setInterval(() => {
@@ -912,9 +950,16 @@ setInterval(() => {
 
             if (type == 'D') {
                 changeMap(scene == 'h' ? 'd' : 'h');
-            } else if (type == '3') {
+            }
+            if (type == '3') {
                 console.log('spike!');
                 takeDamage();
+                entities.splice(index, 1);
+                index--;
+            }
+            if (type == 'T') {
+                const { item } = entities[index];
+                addItem(item);
                 entities.splice(index, 1);
                 index--;
             }
@@ -1005,6 +1050,17 @@ setInterval(() => {
                     fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
                     break;
             }
+        }
+        if (type == 'T') {
+            const { item } = e;
+            c.fillStyle = "orange";
+            c.strokeStyle = "black 2px solid";
+            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h - 1);
+            c.strokeRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h - 1);
+            c.strokeRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h / 3 * tile_h);
+            c.fillStyle = "black";
+            c.textAlign = "center";
+            c.fillText(item.n, (x + w / 2 - scroll_x) * tile_w, (y - 0.2 - scroll_y) * tile_h);
         }
     });
 
