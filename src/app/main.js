@@ -251,10 +251,10 @@ const cards = [
 ];
 
 const tiers = [
-    /* 0 = existence */[0, 1],
-    /* 1 = being     */[3, 4, 5, 6, 7, 8, 9, 10],
-    /* 2 = health    */[11, 12, 13, 16],
-    /* 3 = skill     */[14, 15],
+    /* 0 = existence */[1, 2], // 3 is the health card
+    /* 1 = being     */[5, 6, 7, 8, 9, 10, 11],
+    /* 2 = health    */[12, 13, 14, 17, 4],
+    /* 3 = skill     */[15, 16],
 ];
 const rare = [
     /* 0 = common    */[35, 36],
@@ -263,14 +263,42 @@ const rare = [
     /* 3 = legendary */[39, 40],
 ];
 
+for (let i = 0; i < tiers.length; i++) {
+    const tier = tiers[i];
+    for (const id of tier) {
+        cards[id].t = i;
+    }
+}
 console.log(cards, tiers, rare);
 
 
+// existence
+// // none
 
-let can_do_torch = false; // 720x480 vs 480x320 screen
+// being
+let can_do_jump = true;
+let can_do_run = true;
+let can_do_wield = true;
+let can_do_sight = true;
+let can_do_hear = true;
+let can_do_family = true;
+let can_do_friends = true;
+
+// health
+let can_do_sort = true;
+let can_do_armor = true;
+let can_do_color = true;
+let can_do_speech = true;
+
+// skill
 let can_do_dash = false;
 let can_do_climb = false;
+
+// items
 let can_do_sword = false;
+let can_do_wand = false;
+let can_do_shield = false;
+let can_do_torch = false; // 720x480 vs 480x320 screen
 
 
 let scene = 'h'; // h=home, d=dungeon
@@ -289,11 +317,13 @@ window['test'] = {
     get entities() { return entities },
     get cards() { return cards },
     get transition_progress() { return transition_progress },
+    get lostAbilities() { return lostAbilities },
+    get inventory() { return inventory },
 
     //@ts-ignore
-    get tiers() { return tiers.map(tier => tier.map(i => ({ ...cards[i], i }))) },
+    get tiers() { return tiers.map(tier => tier.map(_i => ({ ...cards[_i], _i }))) },
     //@ts-ignore
-    get rare() { return rare.map(tier => tier.map(i => ({ ...cards[i], i }))) },
+    get rare() { return rare.map(tier => tier.map(_i => ({ ...cards[i], _i }))) },
 };
 /* #EndIfDev */
 
@@ -310,8 +340,9 @@ let hero_vy = 0;  // Y speed
 let hero_ay = 0;  // Y acceleration
 let hero_grounded = 0; // hero is grounded
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
+let hero_tier = 3; // used to unlock health cards
 let inventory = [3, 0, 0, 0, 0].map(i => (cards[i]));
-
+let lostAbilities = [];
 
 
 const changeMap = (_new_map) => {
@@ -407,6 +438,58 @@ window['prioritize'] = (i) => {
     updateInventoryList();
 }
 
+const takeDamage = () => {
+    const lastItem = inventory[inventory.length - 1];
+    if (inventory.findIndex(item => item.n == lastItem.n) < 30) { // is ability
+        lostAbilities.push(lastItem);
+    }
+    inventory.pop();
+    updateAbilityList();
+    updateInventoryList();
+};
+
+const updateAbilityList = () => {
+    const old_tier = hero_tier;
+    if (hero_tier == 3 && !inventory.find(card => card.n == 'health')) { // if health is lost
+        hero_tier = 2;
+    } else if (hero_tier == 2 && inventory.filter(card => card.t == 2).length <= 1) { // if enough tier 2 is lost
+        hero_tier = 1;
+    } else if (hero_tier == 1 && inventory.filter(card => card.t == 1).length <= 1) { // if enough tier 1 is lost
+        hero_tier = 0;
+    }
+
+    if (old_tier != hero_tier) {
+        tiers[hero_tier].forEach(id => {
+            inventory.unshift(cards[id]);
+        });
+    }
+
+
+    can_do_run = (hero_tier >= 2 || inventory.some(card => card.n == 'run'));
+    can_do_jump = (hero_tier >= 2 || inventory.some(card => card.n == 'jump'));
+    can_do_wield = (hero_tier >= 2 || inventory.some(card => card.n == 'hands'));
+    can_do_sight = (hero_tier >= 2 || inventory.some(card => card.n == 'sight'));
+    can_do_hear = (hero_tier >= 2 || inventory.some(card => card.n == 'hear'));
+    can_do_family = (hero_tier >= 2 || inventory.some(card => card.n == 'family'));
+    can_do_friends = (hero_tier >= 2 || inventory.some(card => card.n == 'friends'));
+
+    // health
+    can_do_sort = (hero_tier >= 3 || inventory.some(card => card.n == 'mind'));
+    can_do_armor = (hero_tier >= 3 || inventory.some(card => card.n == 'strength'));
+    can_do_color = (hero_tier >= 3 || inventory.some(card => card.n == 'color'));
+    can_do_speech = (hero_tier >= 3 || inventory.some(card => card.n == 'speech'));
+
+    // skill
+    can_do_dash = (inventory.some(card => card.n == 'dash'));
+    can_do_climb = (inventory.some(card => card.n == 'climb'));
+
+    // items
+    can_do_sword = (inventory.some(card => card.n == 'sword'));
+    can_do_wand = (inventory.some(card => card.n == 'wand'));
+    can_do_shield = (inventory.some(card => card.n == 'shield'));
+    can_do_torch = (inventory.some(card => card.n == 'torch'));
+};
+
 
 // World
 const g1 = 0.012;    // gravity in tiles/frame²
@@ -444,7 +527,10 @@ const keyHandler = (e) => {
         75: 'a', /* K */
         48: 'c1', /* 0 */
         32: 's', /* space */
+        8: 'b', /* backspace */
     };
+
+    if (!keyMap[w]) return;
 
     input[keyMap[w]] = +(t[3] < 'u');
 
@@ -604,6 +690,7 @@ setInterval(() => {
                 changeMap(scene == 'h' ? 'd' : 'h');
             } else if (type == '3') {
                 console.log('spike!');
+                takeDamage();
                 entities.splice(index, 1);
                 index--;
             }
@@ -657,7 +744,7 @@ setInterval(() => {
 
 
     if (paused) {
-        if (transition_progress < -500) {
+        if (transition_progress < -300) {
             transition_progress += 16 / 2;
         }
 
