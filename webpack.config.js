@@ -24,7 +24,7 @@ module.exports = {
         use: 'base64-inline-loader?limit=1000&name=[name].[ext]'
       },
       {
-        test: /\.js$/,
+        test: isProduction ? /\.js$/ : /^\s+$/,
         enforce: 'pre',
         exclude: /(node_modules|bower_components|\.spec\.js)/,
         use: [

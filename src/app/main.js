@@ -91,7 +91,12 @@ let entities = [];
 let frameID = 0;
 
 /* #IfDev */
-window['getEntities'] = () => entities;
+window['test'] = {
+    get entities() { return entities },
+    get cards() { return cards },
+    get tiers() { return tiers.map(tier => tier.map(i => ({ ...cards[i], i }))) },
+    get rare() { return rare },
+};
 /* #EndIfDev */
 
 
@@ -148,11 +153,11 @@ const cards = [
     },
     {// 9
         n: 'family', // name
-        rq: 0, // requires card
+        rq: 1, // requires card
     },
     {// 10
         n: 'friends', // name
-        rq: 0, // requires card
+        rq: 1, // requires card
     },
     {// 11
         n: 'kidney', // name
