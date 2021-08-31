@@ -10,11 +10,18 @@
 <body>
   <div class="container">
     <h3>Mini 2D Platformer demo</h3>
-    <p>Use WASD, ZQSD, or Arrow keys to move.<br>Press J or K to attack, S (while on ground) to block with shield</p>
+    <p>Use WASD, ZQSD, or Arrow keys to move.<br>Press J or K to attack<br>S (while on ground) to block with shield</p>
     <p><a href="https://github.com/vicksonzero/rogue-hoarder">Source code</a></p>
-    <p>
-      <canvas id=a width=480 height=320 style="background:#def;width: 720px; height:480px"></canvas>
-    </p>
+    <div id=game>
+      <canvas id=a width=480 height=320 style="background:#def"></canvas>
+      <div id=h>
+      </div>
+      <div id=p>
+        <h1>Paused</h1>
+        <p>Click the cards to sort them, with least important ones on the right:</p>
+        <div id=list></div>
+      </div>
+    </div>
   </div>
 </body>
 

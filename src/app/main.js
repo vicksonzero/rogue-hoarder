@@ -2,6 +2,13 @@
 
 // Canvas
 const a = document.querySelector("canvas");
+/** @type HTMLDivElement */
+const h = document.querySelector("#h");
+/** @type HTMLDivElement */
+const l = document.querySelector("#list");
+/** @type HTMLDivElement */
+const p = document.querySelector("#p");
+p.style.display = 'none';
 const c = a.getContext("2d");
 
 // Map
@@ -76,6 +83,189 @@ const map_home = [
 ];
 
 
+const cards = [
+    {// 0
+        n: '', // name
+        i: '',
+        rq: 1, // requires live
+    },
+    {// 1
+        n: 'live', // name
+        i: '🤍',
+        rq: 1, // requires live
+    },
+    {// 2
+        n: 'love', // name
+        i: '❤',
+        rq: 1, // requires live
+    },
+    {// 3
+        n: 'health', // name
+        i: '👍',
+        rq: 1, // requires live
+    },
+    {// 4
+        n: 'mind', // name
+        i: '💭',
+        rq: 1, // requires live
+    },
+    {// 5
+        n: 'run', // name
+        i: '🦶',
+        rq: 1, // requires live
+    },
+    {// 6
+        n: 'jump', // name
+        i: '🐇',
+        rq: 1, // requires live
+    },
+    {// 7
+        n: 'hands', // name
+        i: '🖐',
+        rq: 1, // requires live
+    },
+    {// 8
+        n: 'sight', // name
+        i: '👀',
+        rq: 1, // requires live
+    },
+    {// 9
+        n: 'hear', // name
+        i: '👂',
+        rq: 1, // requires live
+    },
+    {// 10
+        n: 'family', // name
+        i: '🏠',
+        rq: 2, // requires love
+    },
+    {// 11
+        n: 'friends', // name
+        i: '👨🏻‍🤝‍👨🏻',
+        rq: 2, // requires love
+    },
+    {// 12
+        n: 'kidney', // name
+        i: '📱',
+        rq: 1, // requires live
+    },
+    {// 13
+        n: 'color', // name
+        i: '🎨',
+        rq: 8, // requires sight
+    },
+    {// 14
+        n: 'speech', // name
+        i: '👄',
+        rq: 9, // requires hear
+    },
+    {// 15
+        n: 'dash', // name
+        i: '🏃‍♂️',
+        rq: 5, // requires run
+    },
+    {// 16
+        n: 'climb', // name
+        i: '🧗‍♂️',
+        rq: 7, // requires jump
+    },
+    {// 17
+        n: 'strength', // name
+        i: '💪',
+        rq: 7, // requires jump
+    },
+    { n: '', rq: 0, i: '' }, // 18
+    { n: '', rq: 0, i: '' }, // 19
+    { n: '', rq: 0, i: '' }, // 20
+    { n: '', rq: 0, i: '' }, // 21
+    { n: '', rq: 0, i: '' }, // 22
+    { n: '', rq: 0, i: '' }, // 23
+    { n: '', rq: 0, i: '' }, // 24
+    { n: '', rq: 0, i: '' }, // 25
+    { n: '', rq: 0, i: '' }, // 26
+    { n: '', rq: 0, i: '' }, // 27
+    { n: '', rq: 0, i: '' }, // 28
+    { n: '', rq: 0, i: '' }, // 29
+
+    // items (30+)
+    {// 30
+        n: 'sword', // name
+        i: '🗡',
+        rq: 7, // requires hand
+    },
+    {// 31
+        n: 'wand', // name
+        i: '✨',
+        rq: 7, // requires hand
+    },
+    {// 32
+        n: 'shield', // name
+        i: '🛡',
+        rq: 7, // requires hand
+    },
+    {// 33
+        n: 'armor', // name
+        i: '👷',
+        rq: 1, // requires live
+    },
+    {// 34
+        n: 'elem armor', // name
+        i: '',
+        rq: 1, // requires live
+    },
+    {// 35
+        n: 'potion', // name
+        i: '💊',
+        rq: 7, // requires hand
+    },
+    {// 36
+        n: 'flower', // name
+        i: '🌹',
+        rq: 7, // requires hand
+    },
+    {// 37
+        n: 'torch', // name
+        i: '🔦',
+        rq: 7, // requires hand
+    },
+    {// 38
+        n: 'compass', // name
+        i: '🧭',
+        rq: 7, // requires hand
+    },
+    {// 39
+        n: 'map', // name
+        i: '🗺️',
+        rq: 7, // requires hand
+    },
+    {// 40
+        n: 'glasses', // name
+        i: '👓',
+        rq: 13, // requires colors
+    },
+    {// 41
+        n: 'treasure', // name
+        i: '🎁',
+        rq: 0, // requires colors
+    },
+];
+
+const tiers = [
+    /* 0 = existence */[0, 1],
+    /* 1 = being     */[3, 4, 5, 6, 7, 8, 9, 10],
+    /* 2 = health    */[11, 12, 13, 16],
+    /* 3 = skill     */[14, 15],
+];
+const rare = [
+    /* 0 = common    */[35, 36],
+    /* 1 = rare      */[30, 32, 33],
+    /* 2 = epic      */[31, 34, 37, 38],
+    /* 3 = legendary */[39, 40],
+];
+
+console.log(cards, tiers, rare);
+
+
 
 let can_do_torch = false; // 720x480 vs 480x320 screen
 let can_do_dash = false;
@@ -83,9 +273,10 @@ let can_do_climb = false;
 let can_do_sword = false;
 
 
-let scene = 'h'; // h=home, d=dungeon, dp=dungeon-pause
+let scene = 'h'; // h=home, d=dungeon
 let transition_progress = 1000; // ms, count till 0
 let transition_to = 'h'; // see `scene`
+let paused = false;
 
 let map = (scene == 'h' ? map_home : map_dungeon);
 let map_w = map[0].length;  // map width in tiles
@@ -97,6 +288,8 @@ let frameID = 0;
 window['test'] = {
     get entities() { return entities },
     get cards() { return cards },
+    get transition_progress() { return transition_progress },
+
     //@ts-ignore
     get tiers() { return tiers.map(tier => tier.map(i => ({ ...cards[i], i }))) },
     //@ts-ignore
@@ -117,156 +310,8 @@ let hero_vy = 0;  // Y speed
 let hero_ay = 0;  // Y acceleration
 let hero_grounded = 0; // hero is grounded
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
-let inventory = [];
+let inventory = [3, 0, 0, 0, 0].map(i => (cards[i]));
 
-const cards = [
-    {// 0
-        n: 'live', // name
-        rq: 0, // requires card
-    },
-    {// 1
-        n: 'love', // name
-        rq: 0, // requires card
-    },
-    {// 2
-        n: 'health', // name
-        rq: 0, // requires card
-    },
-    {// 3
-        n: 'mind', // name
-        rq: 0, // requires card
-    },
-    {// 4
-        n: 'walk', // name
-        rq: 0, // requires card
-    },
-    {// 5
-        n: 'jump', // name
-        rq: 0, // requires card
-    },
-    {// 6
-        n: 'hands', // name
-        rq: 0, // requires card
-    },
-    {// 7
-        n: 'sight', // name
-        rq: 0, // requires card
-    },
-    {// 8
-        n: 'hear', // name
-        rq: 0, // requires card
-    },
-    {// 9
-        n: 'family', // name
-        rq: 1, // requires card
-    },
-    {// 10
-        n: 'friends', // name
-        rq: 1, // requires card
-    },
-    {// 11
-        n: 'kidney', // name
-        rq: 0, // requires card
-    },
-    {// 12
-        n: 'color', // name
-        rq: 7, // requires sight
-    },
-    {// 13
-        n: 'speech', // name
-        rq: 8, // requires hear
-    },
-    {// 14
-        n: 'dash', // name
-        rq: 4, // requires walk
-    },
-    {// 15
-        n: 'climb', // name
-        rq: 5, // requires jump
-    },
-    {// 16
-        n: 'strength', // name
-        rq: 5, // requires jump
-    },
-    0, // 17
-    0, // 18
-    0, // 19
-    0, // 20
-    0, // 21
-    0, // 22
-    0, // 23
-    0, // 24
-    0, // 25
-    0, // 26
-    0, // 27
-    0, // 28
-    0, // 29
-
-    // items (30+)
-    {// 30
-        n: 'sword', // name
-        rq: 6, // requires hand
-    },
-    {// 31
-        n: 'wand', // name
-        rq: 6, // requires hand
-    },
-    {// 32
-        n: 'shield', // name
-        rq: 6, // requires hand
-    },
-    {// 33
-        n: 'armor', // name
-        rq: 0, // requires card
-    },
-    {// 34
-        n: 'elem armor', // name
-        rq: 0, // requires card
-    },
-    {// 35
-        n: 'potion', // name
-        rq: 6, // requires hand
-    },
-    {// 36
-        n: 'flower', // name
-        rq: 6, // requires hand
-    },
-    {// 37
-        n: 'torch', // name
-        rq: 6, // requires hand
-    },
-    {// 38
-        n: 'compass', // name
-        rq: 6, // requires hand
-    },
-    {// 39
-        n: 'map', // name
-        rq: 6, // requires hand
-    },
-    {// 40
-        n: 'glasses', // name
-        rq: 12, // requires colors
-    },
-    {// 41
-        n: 'treasure', // name
-        rq: 0, // requires colors
-    },
-];
-
-const tiers = [
-    /* 0 = existence */[0, 1],
-    /* 1 = being     */[3, 4, 5, 6, 7, 8, 9, 10],
-    /* 2 = health    */[11, 12, 13, 16],
-    /* 3 = skill     */[14, 15],
-];
-const rare = [
-    /* 0 = common    */[35, 36],
-    /* 1 = rare      */[30, 32, 33],
-    /* 2 = epic      */[31, 34, 37, 38],
-    /* 3 = legendary */[39, 40],
-];
-
-console.log(cards, tiers, rare);
 
 
 const changeMap = (_new_map) => {
@@ -329,8 +374,38 @@ const changeMap = (_new_map) => {
 
     transition_progress = 2000;
 
-}
+};
 changeMap('h');
+
+const pauseGame = () => {
+    paused = !paused;
+
+    if (paused) {
+        console.log('pauseGame');
+        transition_progress = -1000;
+
+        p.style.display = 'block';
+        h.style.display = 'none';
+        updateInventoryList();
+    } else {
+        transition_progress = 0;
+
+        p.style.display = 'none';
+        h.style.display = 'flex';
+    }
+};
+
+const updateInventoryList = () => {
+    l.innerHTML = inventory.map(({ n, i }, _i) => `<div class=card data-c=${_i} onclick="prioritize(${_i})">${i}<br>${n}</div>`).join('') + '<div>←💀</div>';
+    h.innerHTML = inventory.map(({ i }, _i) => `<div class=card data-c=${_i}>${i}</div>`).join('');
+};
+updateInventoryList();
+
+window['prioritize'] = (i) => {
+    const item = inventory.splice(i, 1)[0];
+    inventory.push(item);
+    updateInventoryList();
+}
 
 
 // World
@@ -350,34 +425,47 @@ const input = {
     c2: 0, /* cheats */
 };
 
-const keyHandler = ({ keyCode: w, type: t }) => {
-    // console.log("keyHandler", w, t);
+const keyHandler = (e) => {
+    const w = e.keyCode, t = e.type;
+
+    console.log("keyHandler", w, t);
     const keyMap = {
-        87: 'u', /*W*/
-        90: 'u', /*Z*/
-        38: 'u', /*↑*/
-        83: 'd', /*S*/
-        40: 'd', /*↓*/
-        65: 'l', /*A*/
-        81: 'l', /*Q*/
-        37: 'l', /*←*/
-        68: 'r', /*D*/
-        39: 'r', /*→*/
-        74: 'a', /*J*/
-        75: 'a', /*K*/
-        48: 'c1', /*0*/
+        87: 'u', /* W */
+        90: 'u', /* Z */
+        38: 'u', /* ↑ */
+        83: 'd', /* S */
+        40: 'd', /* ↓ */
+        65: 'l', /* A */
+        81: 'l', /* Q */
+        37: 'l', /* ← */
+        68: 'r', /* D */
+        39: 'r', /* → */
+        74: 'a', /* J */
+        75: 'a', /* K */
+        48: 'c1', /* 0 */
+        32: 's', /* space */
     };
 
     input[keyMap[w]] = +(t[3] < 'u');
 
-    if (input.c1) {
+    if (input.c1 && 'c1' == keyMap[w]) {
         can_do_torch = !can_do_torch;
         a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
         a.height = (can_do_torch ? 480 : 320);
+        input.c1 = 0;
     }
+    if (input.s && 's' == keyMap[w]) {
+        pauseGame();
+        input.s = 0;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
 };
 window.addEventListener('keydown', keyHandler);
 window.addEventListener('keyup', keyHandler);
+
+
 
 // Game loop (60 fps)
 setInterval(() => {
@@ -429,7 +517,7 @@ setInterval(() => {
         hero_ay = 0;
     }
 
-    if (transition_progress > 0) {
+    if (transition_progress != 0) {
         input.l = 0;
         input.r = 0;
         input.u = 0;
@@ -568,12 +656,14 @@ setInterval(() => {
     c.fillRect((hero_x - scroll_x) * tile_w, (hero_y - scroll_y) * tile_h, hero_w * tile_w, hero_h * tile_h);
 
 
-    if (transition_progress < 0) {
-        transition_progress += 16;
-
-        if (transition_progress >= 0) {
-            transition_progress = 0;
+    if (paused) {
+        if (transition_progress < -500) {
+            transition_progress += 16 / 2;
         }
+
+        c.fillStyle = `rgba(0,0,0,${(1 + transition_progress / 1000).toFixed(1)})`;
+        c.fillRect(0, 0, a.width, a.height);
+
     } else if (transition_progress > 0) {
         c.fillStyle = `rgba(0,0,0,${(transition_progress / 1000).toFixed(1)})`;
         c.fillRect(0, 0, a.width, a.height);

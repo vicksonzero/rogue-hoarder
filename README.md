@@ -5,9 +5,9 @@ Manage your live priorities vs earnings in this dark adventure game
 
 # How to play
 
-WASD, ZQSD, or Arrow keys to move.
-
-Press J or K to attack, S (while on ground) to block with shield
+- WASD, ZQSD, or Arrow keys to move.
+- Press J or K to attack
+- S (while on ground) to block with shield
 
 
 
