@@ -68,10 +68,10 @@ const map_home = [
     "10000000000000000000000000000001",
     "10000000000000000001110000000001",
     "10000001111111111000000000000001",
-    "10000000000000000000000000000001",
-    "10000000000000000000011111100001",
-    "10000111000000000000000000000000",
-    "10d0000000000000000000000000000D",
+    "11000000000000000000000000000001",
+    "11000000000000000000011111100001",
+    "11000111000000000000000000000000",
+    "11d0000000000000000000000000000D",
     "11111111111111111111111111111111",
 ];
 
@@ -107,8 +107,7 @@ let hero_ay = 0;  // Y acceleration
 let hero_grounded = 0; // hero is grounded
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
 
-const start_transition = (_to) => {
-}
+
 const changeMap = (_new_map) => {
     scene = _new_map;
     map = (scene == 'h' ? map_home : map_dungeon);
@@ -125,6 +124,7 @@ const changeMap = (_new_map) => {
 
     const doorCandidates = [];
     const spikeCandidates = [];
+    const spawnCandidates = [];
     for (let y = 0; y < map_h; y++) {
         for (let x = 0; x < map_w; x++) {
             const tile = map[y][x];
@@ -133,6 +133,9 @@ const changeMap = (_new_map) => {
             }
             if (tile == '3') {
                 spikeCandidates.push({ x, y });
+            }
+            if (tile == '2') {
+                spawnCandidates.push({ x, y });
             }
         }
     }
@@ -152,6 +155,16 @@ const changeMap = (_new_map) => {
         const { x, y } = spikeCandidates.splice(Math.floor(Math.random() * spikeCandidates.length), 1)[0];
         entities.push({ type: '3', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6 });
     }
+    const enemyCount = 10;
+    for (let i = 0; spawnCandidates.length && i < enemyCount; i++) {
+        const { x, y } = spawnCandidates.splice(Math.floor(Math.random() * spawnCandidates.length), 1)[0];
+        entities.push({ type: 'E', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6 });
+    }
+    const treasureCount = 10;
+    for (let i = 0; spawnCandidates.length && i < treasureCount; i++) {
+        const { x, y } = spawnCandidates.splice(Math.floor(Math.random() * spawnCandidates.length), 1)[0];
+        entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6 });
+    }
 
     transition_progress = 2000;
 
@@ -160,7 +173,8 @@ changeMap('h');
 
 
 // World
-const g = 0.015;    // gravity in tiles/frame²
+const g1 = 0.012;    // gravity in tiles/frame²
+const g2 = 0.018;    // gravity in tiles/frame²
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
 
@@ -226,6 +240,7 @@ setInterval(() => {
 
 
     // Apply gravity to Y acceleration, Y acceleration to Y speed and Y speed to Y position
+    const g = hero_vy <= 0 ? g1 : g2;
     hero_vy += g;
     hero_vy += hero_ay;
     if (hero_vy > 0.25) hero_vy = 0.25;
@@ -249,7 +264,6 @@ setInterval(() => {
     if (tile1 == 1 || tile2 == 1) {
         hero_y = Math.floor(hero_y + hero_h) - hero_h;
         hero_grounded = frameID + 5;
-        hero_can_jump = 1;
         hero_vy = 0;
         hero_ay = 0;
     }
@@ -311,8 +325,11 @@ setInterval(() => {
         // If up key is pressed and the hero is grounded, jump
         if (input.u && hero_vy >= 0 && hero_grounded >= frameID && hero_can_jump) {
             // console.log('jump', hero_grounded, frameID);
-            hero_vy = -.35;
+            hero_vy = -.315;
             hero_can_jump = 0;
+        }
+        if (!input.u) {
+            hero_can_jump = 1;
         }
 
         // draw other entities
