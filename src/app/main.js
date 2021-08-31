@@ -90,8 +90,9 @@ let map_h = map.length;     // map height in tiles
 let entities = [];
 let frameID = 0;
 
+/* #IfDev */
 window['getEntities'] = () => entities;
-
+/* #EndIfDev */
 
 
 const tile_w = 32;  // tiles width in px
@@ -106,6 +107,156 @@ let hero_vy = 0;  // Y speed
 let hero_ay = 0;  // Y acceleration
 let hero_grounded = 0; // hero is grounded
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
+let inventory = [];
+
+const cards = [
+    {// 0
+        n: 'live', // name
+        rq: 0, // requires card
+    },
+    {// 1
+        n: 'love', // name
+        rq: 0, // requires card
+    },
+    {// 2
+        n: 'health', // name
+        rq: 0, // requires card
+    },
+    {// 3
+        n: 'mind', // name
+        rq: 0, // requires card
+    },
+    {// 4
+        n: 'walk', // name
+        rq: 0, // requires card
+    },
+    {// 5
+        n: 'jump', // name
+        rq: 0, // requires card
+    },
+    {// 6
+        n: 'hands', // name
+        rq: 0, // requires card
+    },
+    {// 7
+        n: 'sight', // name
+        rq: 0, // requires card
+    },
+    {// 8
+        n: 'hear', // name
+        rq: 0, // requires card
+    },
+    {// 9
+        n: 'family', // name
+        rq: 0, // requires card
+    },
+    {// 10
+        n: 'friends', // name
+        rq: 0, // requires card
+    },
+    {// 11
+        n: 'kidney', // name
+        rq: 0, // requires card
+    },
+    {// 12
+        n: 'color', // name
+        rq: 7, // requires sight
+    },
+    {// 13
+        n: 'speech', // name
+        rq: 8, // requires hear
+    },
+    {// 14
+        n: 'dash', // name
+        rq: 4, // requires walk
+    },
+    {// 15
+        n: 'climb', // name
+        rq: 5, // requires jump
+    },
+    {// 16
+        n: 'strength', // name
+        rq: 5, // requires jump
+    },
+    0, // 17
+    0, // 18
+    0, // 19
+    0, // 20
+    0, // 21
+    0, // 22
+    0, // 23
+    0, // 24
+    0, // 25
+    0, // 26
+    0, // 27
+    0, // 28
+    0, // 29
+
+    // items (30+)
+    {// 30
+        n: 'sword', // name
+        rq: 6, // requires hand
+    },
+    {// 31
+        n: 'wand', // name
+        rq: 6, // requires hand
+    },
+    {// 32
+        n: 'shield', // name
+        rq: 6, // requires hand
+    },
+    {// 33
+        n: 'armor', // name
+        rq: 0, // requires card
+    },
+    {// 34
+        n: 'elem armor', // name
+        rq: 0, // requires card
+    },
+    {// 35
+        n: 'potion', // name
+        rq: 6, // requires hand
+    },
+    {// 36
+        n: 'flower', // name
+        rq: 6, // requires hand
+    },
+    {// 37
+        n: 'torch', // name
+        rq: 6, // requires hand
+    },
+    {// 38
+        n: 'compass', // name
+        rq: 6, // requires hand
+    },
+    {// 39
+        n: 'map', // name
+        rq: 6, // requires hand
+    },
+    {// 40
+        n: 'glasses', // name
+        rq: 12, // requires colors
+    },
+    {// 41
+        n: 'treasure', // name
+        rq: 0, // requires colors
+    },
+];
+
+const tiers = [
+    /* 0 = existence */[0, 1],
+    /* 1 = being     */[3, 4, 5, 6, 7, 8, 9, 10],
+    /* 2 = health    */[11, 12, 13, 16],
+    /* 3 = skill     */[14, 15],
+];
+const rare = [
+    /* 0 = common    */[35, 36],
+    /* 1 = rare      */[30, 32, 33],
+    /* 2 = epic      */[31, 34, 37, 38],
+    /* 3 = legendary */[39, 40],
+];
+
+console.log(cards, tiers, rare);
 
 
 const changeMap = (_new_map) => {
