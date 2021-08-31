@@ -501,10 +501,13 @@ let hero_y = 2;   // Y position in tiles
 let hero_vy = 0;  // Y speed
 let hero_g = g1;
 let hero_ay = 0;  // Y acceleration
+let hero_dir_x = 1;  // facing X direction
 let hero_grounded = 0; // hero is grounded
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
+let hero_stabby = 0;  // hero can stab
+let hero_can_stab = 1;  // hero can stab
 let hero_tier = 3; // used to unlock health cards
-let inventory = [3, 0, 0, 0].map(i => (cards[i]));
+let inventory = [3, 30, 0, 0].map(i => (cards[i]));
 let inventory_size = inventory.length;
 let lostAbilities = [];
 
@@ -881,6 +884,7 @@ setInterval(() => {
         }
         // If left key is pressed, go left
         if (input.l) {
+            hero_dir_x = -1;
             // console.log('input.l 1', Math.floor(hero_y), Math.floor(hero_x));
             hero_x -= .1;
             hero_x = Math.max(hero_x, 0);
@@ -904,6 +908,7 @@ setInterval(() => {
 
         // If right key is pressed, go right
         if (input.r) {
+            hero_dir_x = 1;
             hero_x += .1;
             hero_x = Math.min(map_w - hero_w, hero_x);
 
@@ -934,6 +939,13 @@ setInterval(() => {
                 if (hero_vy < -0.15) hero_vy = -0.15;
                 hero_g = g2;
             }
+        }
+        if (input.a && frameID >= hero_can_stab) {
+            hero_stabby = frameID + 15;
+            hero_can_stab = frameID + 30;
+        }
+        if (!hero_can_stab && !input.a) {
+            hero_can_stab = frameID;
         }
 
         // update entity
@@ -1067,7 +1079,15 @@ setInterval(() => {
     // Draw hero
     c.fillStyle = "orange";
     c.fillRect((hero_x - scroll_x) * tile_w, (hero_y - scroll_y) * tile_h, hero_w * tile_w, hero_h * tile_h);
-
+    if (hero_stabby > frameID) {
+        c.fillStyle = "gray";
+        c.fillRect(
+            (hero_x - scroll_x + hero_dir_x * (1 - Math.max(0, hero_stabby - frameID) / 15 * 0.7 - 0.1 * (hero_dir_x + 1))) * tile_w,
+            (hero_y + 0.4 - scroll_y) * tile_h,
+            0.8 * tile_w,
+            0.2 * tile_h
+        );
+    }
 
     if (paused) {
         if (transition_progress < -300) {
