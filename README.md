@@ -1,7 +1,7 @@
 # Rogue-Hoarder-13k
 
 Your inventory space is your HP.  
-Manage your live priorities vs earnings in this dark adventure game
+Manage your life priorities vs earnings in this dark adventure game
 
 # How to play
 
