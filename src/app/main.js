@@ -2,6 +2,7 @@
 
 // Canvas
 const a = document.querySelector("canvas");
+
 /** @type HTMLDivElement */
 const h = document.querySelector("#h");
 /** @type HTMLDivElement */
@@ -10,6 +11,10 @@ const l = document.querySelector("#list");
 const p = document.querySelector("#p");
 p.style.display = 'none';
 const c = a.getContext("2d");
+
+// cache
+const a_cache = document.createElement("canvas");
+const a_cache_c = a_cache.getContext('2d');
 
 // Map
 const map_dungeon = [
@@ -292,6 +297,18 @@ for (let i = 0; i < tiers.length; i++) {
    @property {string} b
    @property {number} facing // -1 means left, 1 means right
    @property {string} element // '' | 'F' | 'W' | 'E'
+   @property {number} sx // spawn x
+   @property {number} sy // spawn y
+ */
+
+/**
+ * @typedef IEntity
+   @property {string} type
+   @property {number} x
+   @property {number} y
+   @property {number} w
+   @property {number} h
+   @property {number} h
  */
 
 /** @type {IEnemyDef[]} */
@@ -584,16 +601,26 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
     for (let i = 0; spawnCandidates.length && i < enemyCount; i++) {
         const { x, y } = spawnCandidates[Math.floor(Math.random() * spawnCandidates.length)];
 
-        const enemyDef = enemies[rf([1])];
+        const enemyDef = enemies[rf([1, 0])];
         const { w, h } = enemyDef;
+        const sx = x + (1 - w) / 2;
+        const sy = y + 1 - h - (enemyDef.b.includes('f') ? 1 : 0);
         enemy = {
             ...enemyDef,
             maxHp: enemyDef.hp,
             facing: 1,
             element: '',
+            sx,
+            sy,
         };
 
-        return { type: 'E', x: x + (1 - w) / 2, y: y + 1 - h, w, h, enemy };
+        return {
+            type: 'E',
+            x: sx,
+            y: sy,
+            w, h,
+            enemy,
+        };
     }
 
     return result;
@@ -729,6 +756,18 @@ window.addEventListener('keyup', keyHandler);
 
 changeMap('h');
 
+a_cache.width = map_dungeon[0].length * tile_w;
+a_cache.height = map_dungeon.length * tile_h;
+for (let x = 0; x < map_dungeon[0].length; x++) {
+    for (let y = 0; y < map_dungeon.length; y++) {
+        const tile = map_dungeon[y][x];
+        if (tile == '1') {
+            a_cache_c.fillStyle = "green";
+            a_cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
+        }
+    }
+}
+
 // Game loop (60 fps)
 setInterval(() => {
     frameID++;
@@ -851,7 +890,8 @@ setInterval(() => {
             hero_can_jump = 1;
         }
 
-        // draw other entities
+        // update entity
+        // update other entities
         for (let index = 0; index < entities.length; index++) {
             const { type, x, y, w, h } = entities[index];
 
@@ -882,13 +922,22 @@ setInterval(() => {
     // Draw map
     const draw_x = Math.floor(scroll_x);
     const draw_y = Math.floor(scroll_y);
-    for (let x = draw_x; x < map_w && x <= draw_x + 23; x++) {
-        for (let y = draw_y; y < map_h && y <= draw_y + 16; y++) {
-            const tile = map[y][x];
-            if (tile == '1') {
-                c.fillStyle = "green";
-                c.rect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, tile_w, tile_h);
-                c.fill();
+    if (scene == 'd') {
+        c.drawImage(a_cache,
+            scroll_x * tile_w, scroll_y * tile_h,
+            a.width, a.height,
+            0, 0,
+            a.width, a.height
+        );
+    } else {
+        for (let x = draw_x; x < map_w && x <= draw_x + 23; x++) {
+            for (let y = draw_y; y < map_h && y <= draw_y + 16; y++) {
+                const tile = map[y][x];
+                if (tile == '1') {
+                    c.fillStyle = "green";
+                    c.rect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, tile_w, tile_h);
+                    c.fill();
+                }
             }
         }
     }
@@ -900,6 +949,8 @@ setInterval(() => {
     //         c.fillText(`[${y}, ${x}]`, (x - scroll_x) * tile_w, (y - scroll_y) * tile_h)
     //     }
     // }
+
+    // render entity
     // draw other entities
     entities.forEach((e) => {
         const { type, x, y, w, h } = e;
@@ -914,8 +965,8 @@ setInterval(() => {
             c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
         }
         if (type == 'E') {
-            // c.fillStyle = "red";
-            // c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            c.fillStyle = "red";
+            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
             const { n, d, hp, sp, b, facing } = e.enemy;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
@@ -931,14 +982,19 @@ setInterval(() => {
                     fillRectC(c, (cx - facing * w), (cy + h * 0.35), w, h / 4, "brown", false);
                     break;
                 case 'Bat':
+                    // foot
+                    fillRectC(c, cx - 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
+                    fillRectC(c, cx + 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
                     // body
-                    fillRectC(c, cx, cy, w, h, "navy", false);
-                    // head
-                    fillRectC(c, (cx + facing * w / 2), (cy - h * 0.5), w / 4 * 3, h / 2, "gray", false);
-                    // ear
-                    fillRectC(c, (cx + facing * w * 0.3), (cy - h * 0.8), w / 4, h * 0.4, "gray", false);
-                    // tail
-                    fillRectC(c, (cx - facing * w), (cy + h * 0.35), w, h / 4, "brown", false);
+                    fillRectC(c, cx, cy + 0.1 * h, w * 0.7, h * 0.7, "navy", false);
+                    c.fillStyle = "navy";
+                    const flap = (Math.ceil(frameID / 4) % 2 == 0) ? 1 : 0.3;
+                    // wings
+                    c.fillRect((cx - w * 0.7 / 2 - w * 0.7) * tile_w, (cy - h * 0.6 * flap) * tile_h, (w * 0.7) * tile_w, (h * 0.6 * flap) * tile_h);
+                    c.fillRect((cx + w * 0.7 / 2) * tile_w, (cy - h * 0.6 * flap) * tile_h, (w * 0.7) * tile_w, (h * 0.6 * flap) * tile_h);
+                    // eyes
+                    fillRectC(c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
+                    fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
                     break;
             }
         }
