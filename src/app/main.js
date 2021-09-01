@@ -606,7 +606,7 @@ const updateInventoryList = () => {
         .map(({ n, i, t }, _i) => `<div class="card c-${t}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
         .join('') +
         '<div>←💀</div>' +
-        (inventory.length <= inventory_size ? '' : `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${inventory[inventory_size].n}</div><div>←🗑</div>`)
+        (inventory.length <= inventory_size ? '' : `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${inventory[inventory_size].n}</div><div>→🗑</div>`)
     );
     h.innerHTML = inventory.map(({ i, t }, _i) => `<div class="card c-${t}" data-c=${_i}>${i}</div>`).join('');
 };
@@ -953,6 +953,11 @@ setInterval(() => {
         for (let index = 0; index < entities.length; index++) {
             const { type, x, y, w, h } = entities[index];
 
+            if (type == 'E') {
+                const { enemy } = entities[index];
+                enemy.facing = Math.sign(hero_x - x);
+            }
+
             const hasCollision = (hero_x < x + w &&
                 hero_x + hero_w > x &&
                 hero_y < y + h &&
@@ -1053,10 +1058,10 @@ setInterval(() => {
                     // body
                     fillRectC(c, cx, cy + 0.1 * h, w * 0.7, h * 0.7, "navy", false);
                     c.fillStyle = "navy";
-                    const flap = (Math.ceil(frameID / 4) % 2 == 0) ? 1 : 0.3;
+                    const flap = (Math.ceil(frameID / 10) % 2 == 0) ? 1 : 0;
                     // wings
-                    c.fillRect((cx - w * 0.7 / 2 - w * 0.7) * tile_w, (cy - h * 0.6 * flap) * tile_h, (w * 0.7) * tile_w, (h * 0.6 * flap) * tile_h);
-                    c.fillRect((cx + w * 0.7 / 2) * tile_w, (cy - h * 0.6 * flap) * tile_h, (w * 0.7) * tile_w, (h * 0.6 * flap) * tile_h);
+                    c.fillRect((cx - w * 0.7 / 2 - w * 0.7) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
+                    c.fillRect((cx + w * 0.7 / 2) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
                     // eyes
                     fillRectC(c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
                     fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
