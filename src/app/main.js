@@ -92,6 +92,14 @@ const map_home = [
 ];
 
 
+
+/**
+ * @typedef IItem
+   @property {string} n - name
+   @property {string} i - icon
+   @property {number} rq - card requirements
+ */
+
 const cards = [
     {// 0
         n: '', // name
@@ -292,18 +300,18 @@ for (let i = 0; i < tiers.length; i++) {
  */
 /**
  * @typedef IEnemy
-   @property {string} n
-   @property {number} d
-   @property {number} hp
-   @property {number} maxHp
-   @property {number} w
-   @property {number} h
-   @property {number} sp
-   @property {string} b
-   @property {number} facing // -1 means left, 1 means right
-   @property {string} element // '' | 'F' | 'W' | 'E'
-   @property {number} sx // spawn x
-   @property {number} sy // spawn y
+   @property {string} n                        - name. identifier for the enemy's type
+   @property {number} d                        - difficulty rating. is negotiated against level difficulty budget when spawning
+   @property {number} hp                       - an enemy instance dies when hp is 0
+   @property {number} maxHp                    - max hp, is copied from IEnemyDef.hp
+   @property {number} w                        - width, will be copied to entity
+   @property {number} h                        - height, will be copied to entity
+   @property {number} sp                       - moving speed
+   @property {string} b                        - behaviors string
+   @property {number} facing                   - facing direction. -1 means left, 1 means right
+   @property {'' | 'F' | 'W' | 'E'} element    - type of element (F=Fire, W=Water, E=Electric)
+   @property {number} sx                       - spawn x
+   @property {number} sy                       - spawn y
  */
 
 /**
@@ -313,7 +321,8 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} y
    @property {number} w
    @property {number} h
-   @property {IItem} item
+   @property {IItem} [item]
+   @property {IEnemy} [enemy]
  */
 
 /** @type {IEnemyDef[]} */
@@ -468,6 +477,7 @@ let paused = false;
 let map = (scene == 'h' ? map_home : map_dungeon);
 let map_w = map[0].length;  // map width in tiles
 let map_h = map.length;     // map height in tiles
+/** @type {IEntity[]} */
 let entities = [];
 let frameID = 0;
 
