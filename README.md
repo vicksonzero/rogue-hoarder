@@ -39,6 +39,7 @@ Manage your life priorities vs earnings in this dark adventure game
   - [ ] procedural dungeon?
   - [ ] oneway platform
   - [ ] mobile ui?
+  - [ ] line-of-sight enemies
 
 
 ------------------------------------

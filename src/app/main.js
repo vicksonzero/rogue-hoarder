@@ -73,7 +73,7 @@ const map_home = [
     "10000000000000000000000000000001",
     "10000000000000000000000001111111",
     "10000000000000000000000000000001",
-    "10000000000000000001110000000001",
+    "10000000000000020001110000000001",
     "10000001111111111000000000000001",
     "11000000000000000000000000000001",
     "11000000000000000000011111100001",
@@ -246,7 +246,7 @@ const cards = [
     {// 41
         n: 'treasure', // name
         i: '🎁',
-        rq: 0, // requires colors
+        rq: 0, // requires none
     },
 ];
 
@@ -269,7 +269,144 @@ for (let i = 0; i < tiers.length; i++) {
         cards[id].t = i;
     }
 }
-console.log(cards, tiers, rare);
+
+/**
+ * @typedef IEnemyDef 
+   @property {string} n
+   @property {number} d
+   @property {number} hp
+   @property {number} w
+   @property {number} h
+   @property {number} sp
+   @property {string} b
+ */
+/**
+ * @typedef IEnemy
+   @property {string} n
+   @property {number} d
+   @property {number} hp
+   @property {number} maxHp
+   @property {number} w
+   @property {number} h
+   @property {number} sp
+   @property {string} b
+   @property {number} facing // -1 means left, 1 means right
+   @property {string} element // '' | 'F' | 'W' | 'E'
+ */
+
+/** @type {IEnemyDef[]} */
+const enemies = [
+    // all enemies share attack dmg (=1) and attack cool down (2s)
+    // all enemies can have elements. e-enemies must have elements
+    // all enemies have difficulty rating for spawning
+    // all enemies spawns in maxHp
+    // all enemies can be knocked back, except heavy
+
+    // behaviors
+    // p = patrol
+    // h = hang
+    // w = walk
+    // m = melee
+    // a = armor? (allow hp+3)
+    // f = fly
+    // s = shooty
+    // e = element! (diff+3)
+    // v = venom (every 3 second, have a low chance to take damage)
+    // y = heavy (cannot be knocked back)
+
+    {// 100
+        n: 'Rat',
+        d: 1, // difficulty rating
+        hp: 2,
+        w: 0.6,
+        h: 0.5,
+        sp: 0.05,
+        b: 'wmp', // behaviors: walk, melee, patrol-around-home
+    },
+    {// 101
+        n: 'Bat',
+        d: 2, // difficulty rating
+        hp: 2,
+        w: 0.65,
+        h: 0.65,
+        sp: 0.04,
+        b: 'fmp', // behaviors: fly, melee, patrol
+    },
+    {// 102
+        n: 'Bee',
+        d: 3, // difficulty rating
+        hp: 3,
+        w: 0.5,
+        h: 0.5,
+        sp: 0.04,
+        b: 'fsp', // behaviors: fly, shooty, patrol
+    },
+    {// 103
+        n: 'Skeleton',
+        d: 4, // difficulty rating
+        hp: 5,
+        w: 0.8,
+        h: 0.5,
+        sp: 0.05,
+        b: 'wma', // behaviors: walk, melee, armor?
+    },
+    {// 104
+        n: 'Spider',
+        d: 4, // difficulty rating
+        hp: 5,
+        w: 0.85,
+        h: 0.5,
+        sp: 0.05,
+        b: 'hm', // behaviors: hang, melee
+    },
+    {// 105
+        n: 'Troll',
+        d: 8, // difficulty rating
+        hp: 10,
+        w: 0.8,
+        h: 1.5,
+        sp: 0.05,
+        b: 'wma', // behaviors: walk, melee, armor?
+    },
+    {// 106
+        n: 'Minotaur',
+        d: 10, // difficulty rating
+        hp: 15,
+        w: 0.8,
+        h: 1.5,
+        sp: 0.05,
+        b: 'wmpa', // behaviors: walk, melee, patrol, armor?
+    },
+    {// 107
+        n: 'Wisp', // ghost fire
+        d: 3, // difficulty rating, excluding elements
+        hp: 5,
+        w: 0.8,
+        h: 1.5,
+        sp: 0.05,
+        b: 'fspe', // behaviors: fly, shooty, patrol, element! (diff+3)
+    },
+    {// 108
+        n: 'Snake',
+        d: 4, // difficulty rating, excluding elements
+        hp: 3,
+        w: 0.8,
+        h: 0.9,
+        sp: 0.03,
+        b: 'wspv', // behaviors: walk, shooty, patrol, venom
+    },
+    {// 109
+        n: 'Golem',
+        d: 14, // difficulty rating, excluding elements
+        hp: 25,
+        w: 1.2,
+        h: 1.6,
+        sp: 0.01,
+        b: 'wmpy', // behaviors: walk, shooty, patrol, heavy
+    },
+];
+
+console.log(cards, tiers, rare, enemies);
 
 
 // existence
@@ -393,10 +530,8 @@ const changeMap = (_new_map) => {
         entities.push({ type: '3', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6 });
     }
     const enemyCount = 10;
-    for (let i = 0; spawnCandidates.length && i < enemyCount; i++) {
-        const { x, y } = spawnCandidates.splice(Math.floor(Math.random() * spawnCandidates.length), 1)[0];
-        entities.push({ type: 'E', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6 });
-    }
+    entities = entities.concat(spawnEnemy(spawnCandidates, enemyCount));
+
     const treasureCount = 10;
     for (let i = 0; spawnCandidates.length && i < treasureCount; i++) {
         const { x, y } = spawnCandidates.splice(Math.floor(Math.random() * spawnCandidates.length), 1)[0];
@@ -406,7 +541,6 @@ const changeMap = (_new_map) => {
     transition_progress = 2000;
 
 };
-changeMap('h');
 
 const pauseGame = () => {
     paused = !paused;
@@ -437,6 +571,33 @@ window['prioritize'] = (i) => {
     inventory.push(item);
     updateInventoryList();
 }
+
+const spawnEnemy = (spawnCandidates, enemyCount) => {
+    let result = [];
+    /** @type {IEnemy} */
+    let enemy;
+
+    const rf = (arr) => { // FIXME: to be removed when merging with unpushed master
+        return arr[~~(Math.random() * arr.length)];
+    }
+
+    for (let i = 0; spawnCandidates.length && i < enemyCount; i++) {
+        const { x, y } = spawnCandidates[Math.floor(Math.random() * spawnCandidates.length)];
+
+        const enemyDef = enemies[rf([1])];
+        const { w, h } = enemyDef;
+        enemy = {
+            ...enemyDef,
+            maxHp: enemyDef.hp,
+            facing: 1,
+            element: '',
+        };
+
+        return { type: 'E', x: x + (1 - w) / 2, y: y + 1 - h, w, h, enemy };
+    }
+
+    return result;
+};
 
 const takeDamage = () => {
     const lastItem = inventory[inventory.length - 1];
@@ -496,6 +657,14 @@ const updateAbilityList = () => {
 const update_can_do_torch = () => {
     a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
     a.height = (can_do_torch ? 480 : 320);
+}
+
+const fillRectC = (/** @type {CanvasRenderingContext2D} */ c, cx, cy, w, h, fill, stroke) => {
+    c.beginPath();
+    c.fillStyle = fill;
+    c.rect((cx - w / 2) * tile_w, (cy - h / 2) * tile_w, w * tile_w, h * tile_w);
+    c.fill();
+    if (stroke) { c.strokeStyle = stroke; c.stroke(); }
 }
 
 // World
@@ -558,6 +727,7 @@ window.addEventListener('keydown', keyHandler);
 window.addEventListener('keyup', keyHandler);
 
 
+changeMap('h');
 
 // Game loop (60 fps)
 setInterval(() => {
@@ -731,7 +901,8 @@ setInterval(() => {
     //     }
     // }
     // draw other entities
-    entities.forEach(({ type, x, y, w, h }) => {
+    entities.forEach((e) => {
+        const { type, x, y, w, h } = e;
         if (type == 'D') {
             c.fillStyle = "brown";
             c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
@@ -741,6 +912,35 @@ setInterval(() => {
         if (type == '3') {
             c.fillStyle = "red";
             c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+        }
+        if (type == 'E') {
+            // c.fillStyle = "red";
+            // c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            const { n, d, hp, sp, b, facing } = e.enemy;
+            const cx = x + w / 2 - scroll_x;
+            const cy = y + h / 2 - scroll_y;
+            switch (n) {
+                case 'Rat':
+                    // body
+                    fillRectC(c, cx, cy, w, h, "gray", false);
+                    // head
+                    fillRectC(c, (cx + facing * w / 2), (cy - h * 0.5), w / 4 * 3, h / 2, "gray", false);
+                    // ear
+                    fillRectC(c, (cx + facing * w * 0.3), (cy - h * 0.8), w / 4, h * 0.4, "gray", false);
+                    // tail
+                    fillRectC(c, (cx - facing * w), (cy + h * 0.35), w, h / 4, "brown", false);
+                    break;
+                case 'Bat':
+                    // body
+                    fillRectC(c, cx, cy, w, h, "navy", false);
+                    // head
+                    fillRectC(c, (cx + facing * w / 2), (cy - h * 0.5), w / 4 * 3, h / 2, "gray", false);
+                    // ear
+                    fillRectC(c, (cx + facing * w * 0.3), (cy - h * 0.8), w / 4, h * 0.4, "gray", false);
+                    // tail
+                    fillRectC(c, (cx - facing * w), (cy + h * 0.35), w, h / 4, "brown", false);
+                    break;
+            }
         }
     });
 
