@@ -482,6 +482,9 @@ window['test'] = {
 /* #EndIfDev */
 
 
+// World
+const g1 = 0.012;    // gravity in tiles/frame²
+const g2 = 0.018;    // gravity in tiles/frame²
 const tile_w = 32;  // tiles width in px
 const tile_h = 32;  // tiles height in px
 
@@ -491,6 +494,7 @@ let hero_h = 1;  // hero height in tiles
 let hero_x = 10;   // X position in tiles
 let hero_y = 2;   // Y position in tiles
 let hero_vy = 0;  // Y speed
+let hero_g = g1;
 let hero_ay = 0;  // Y acceleration
 let hero_grounded = 0; // hero is grounded
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
@@ -614,13 +618,13 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
             sy,
         };
 
-        return {
+        result.push({
             type: 'E',
             x: sx,
             y: sy,
             w, h,
             enemy,
-        };
+        });
     }
 
     return result;
@@ -694,9 +698,6 @@ const fillRectC = (/** @type {CanvasRenderingContext2D} */ c, cx, cy, w, h, fill
     if (stroke) { c.strokeStyle = stroke; c.stroke(); }
 }
 
-// World
-const g1 = 0.012;    // gravity in tiles/frame²
-const g2 = 0.018;    // gravity in tiles/frame²
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
 
@@ -791,10 +792,10 @@ setInterval(() => {
 
 
     // Apply gravity to Y acceleration, Y acceleration to Y speed and Y speed to Y position
-    const g = hero_vy <= 0 ? g1 : g2;
-    hero_vy += g;
+    hero_vy += hero_g;
     hero_vy += hero_ay;
-    if (hero_vy > 0.25) hero_vy = 0.25;
+    if (hero_vy > 0) hero_g = g2;
+    if (hero_vy > 0.2) hero_vy = 0.2;
     hero_y += hero_vy;
 
     // Vertical bounds
@@ -816,6 +817,7 @@ setInterval(() => {
         hero_y = Math.floor(hero_y + hero_h) - hero_h;
         hero_grounded = frameID + 5;
         hero_vy = 0;
+        hero_g = g1;
         hero_ay = 0;
     }
 
@@ -885,10 +887,15 @@ setInterval(() => {
         if (input.u && hero_vy >= 0 && hero_grounded >= frameID && hero_can_jump) {
             // console.log('jump', hero_grounded, frameID);
             hero_vy = -.315;
+            hero_g = g1;
             hero_can_jump = 0;
         }
         if (!input.u) {
             hero_can_jump = 1;
+            if (hero_vy < 0) {
+                if (hero_vy < -0.15) hero_vy = -0.15;
+                hero_g = g2;
+            }
         }
 
         // update entity
@@ -966,8 +973,8 @@ setInterval(() => {
             c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
         }
         if (type == 'E') {
-            c.fillStyle = "red";
-            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            // c.fillStyle = "red";
+            // c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
             const { n, d, hp, sp, b, facing } = e.enemy;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
