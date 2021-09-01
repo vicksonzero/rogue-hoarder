@@ -715,6 +715,8 @@ const keyHandler = (e) => {
     const w = e.keyCode, t = e.type;
 
     console.log("keyHandler", w, t);
+
+    // -4 bytes zipped compared to if-statements
     const keyMap = {
         87: 'u', /* W */
         90: 'u', /* Z */
@@ -758,15 +760,14 @@ changeMap('h');
 
 a_cache.width = map_dungeon[0].length * tile_w;
 a_cache.height = map_dungeon.length * tile_h;
-for (let x = 0; x < map_dungeon[0].length; x++) {
-    for (let y = 0; y < map_dungeon.length; y++) {
-        const tile = map_dungeon[y][x];
-        if (tile == '1') {
-            a_cache_c.fillStyle = "green";
-            a_cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
-        }
+
+// -10 bytes zipped compared to nested for-loops
+map_dungeon.forEach((row, y) => row.split('').forEach((tile, x) => {
+    if (tile == '1') {
+        a_cache_c.fillStyle = "green";
+        a_cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
     }
-}
+}));
 
 // Game loop (60 fps)
 setInterval(() => {
