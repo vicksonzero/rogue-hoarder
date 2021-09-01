@@ -16,19 +16,32 @@ Manage your life priorities vs earnings in this dark adventure game
 - [x] basic platformer
 - [x] moving camera
 - [x] switch between hub world and dungeon
-- [ ] procedural enemies by level
+- [x] procedural enemies by level
+- [ ] enemies behaviors
+  - [ ] p = patrol
+  - [ ] h = hang
+  - [ ] w = walk
+  - [ ] m = melee
+  - [ ] a = armor? (allow hp+3)
+  - [ ] f = fly
+  - [ ] s = shooty
+  - [ ] e = element! (diff+3)
+  - [ ] v = venom (every 3 second, have a low chance to take damage)
+  - [ ] y = heavy (cannot be knocked back)
 - [x] procedural traps by level
-- [ ] procedural loots on fixed map layout
-- [ ] poking sword
+- [x] procedural loots on fixed map layout
+- [x] poking sword
+  - [ ] sword hurting enemies (and cause knockbacks)
 - [ ] shooting magic
 - [x] inventory queue linked to hp
+  - [ ] become invincible when being take damage
 - [x] reorganize items in queue
-- [ ] items to get (treasure box, sword and wands)
+- [x] items to get (treasure box, sword and wands)
 - [ ] score system
 - [x] toggle off abilities by taking damage
 - [x] climbing walls
 - [ ] dash
-- [ ] getting items
+- [x] getting items
 - [x] discarding health card unlocks more health cards
 - [x] discard multiple health cards to unlock a card
 - [ ] friends and family and doctor
