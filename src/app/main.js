@@ -957,6 +957,13 @@ setInterval(() => {
         if (!hero_can_stab && !input.a) {
             hero_can_stab = frameID;
         }
+        if (input.a && frameID >= hero_can_stab) {
+            hero_stabby = frameID + 15;
+            hero_can_stab = frameID + 30;
+        }
+        if (!hero_can_stab && !input.a) {
+            hero_can_stab = frameID;
+        }
 
         // update entity
         // update other entities
