@@ -21,29 +21,32 @@ Manage your life priorities vs earnings in this dark adventure game
   - [ ] p = patrol
   - [ ] h = hang
   - [ ] w = walk
-  - [ ] m = melee
+  - [ ] m = melee (leap attack, body cannot touch)
   - [ ] a = armor? (allow hp+3)
   - [ ] f = fly
   - [ ] s = shooty
-  - [ ] e = element! (diff+3)
+  - [ ] e = element! (diff+3, take 0 or take 2 instead of take 1 damage)
   - [ ] v = venom (every 3 second, have a low chance to take damage)
   - [ ] y = heavy (cannot be knocked back)
 - [x] procedural traps by level
 - [x] procedural loots on fixed map layout
-- [x] poking sword
-  - [ ] sword hurting enemies (and cause knockbacks)
-- [ ] shooting magic
+- [ ] level generation and progression
+- [x] toggle off abilities by taking damage
+- [ ] player can do
+  - [x] poking sword
+    - [ ] sword hurting enemies (and cause knockbacks)
+  - [ ] shooting magic
+  - [x] climbing walls
+  - [ ] dash
+  - [x] getting items
 - [x] inventory queue linked to hp
   - [ ] become invincible when being take damage
 - [x] reorganize items in queue
 - [x] items to get (treasure box, sword and wands)
 - [ ] score system
-- [x] toggle off abilities by taking damage
-- [x] climbing walls
-- [ ] dash
-- [x] getting items
 - [x] discarding health card unlocks more health cards
 - [x] discard multiple health cards to unlock a card
+  - [ ] animations for unlocking health
 - [ ] friends and family and doctor
 - [ ] MVP done
 - [ ] after playtest,
@@ -53,6 +56,7 @@ Manage your life priorities vs earnings in this dark adventure game
   - [ ] oneway platform
   - [ ] mobile ui?
   - [ ] line-of-sight enemies
+  - [ ] load pixel sprites
 
 
 ------------------------------------
