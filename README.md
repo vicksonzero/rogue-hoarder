@@ -17,17 +17,6 @@ Manage your life priorities vs earnings in this dark adventure game
 - [x] moving camera
 - [x] switch between hub world and dungeon
 - [x] procedural enemies by level
-- [ ] enemies behaviors
-  - [ ] p = patrol
-  - [ ] h = hang
-  - [ ] w = walk
-  - [ ] m = melee (leap attack, body cannot touch)
-  - [ ] a = armor? (allow hp+3)
-  - [ ] f = fly
-  - [ ] s = shooty
-  - [ ] e = element! (diff+3, take 0 or take 2 instead of take 1 damage)
-  - [ ] v = venom (every 3 second, have a low chance to take damage)
-  - [ ] y = heavy (cannot be knocked back)
 - [x] procedural traps by level
 - [x] procedural loots on fixed map layout
 - [ ] level generation and progression
@@ -41,6 +30,17 @@ Manage your life priorities vs earnings in this dark adventure game
   - [x] getting items
 - [x] inventory queue linked to hp
   - [ ] become invincible when being take damage
+- [ ] enemies behaviors
+  - [ ] p = patrol
+  - [ ] h = hang
+  - [ ] w = walk
+  - [ ] m = melee (leap attack, body cannot touch)
+  - [ ] a = armor? (allow hp+3)
+  - [ ] f = fly
+  - [ ] s = shooty
+  - [ ] e = element! (diff+3, take 0 or take 2 instead of take 1 damage)
+  - [ ] v = venom (every 3 second, have a low chance to take damage)
+  - [ ] y = heavy (cannot be knocked back)
 - [x] reorganize items in queue
 - [x] items to get (treasure box, sword and wands)
 - [ ] score system
