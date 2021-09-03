@@ -315,6 +315,7 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} sy                       - spawn y
    @property {number} dx                       - dest x
    @property {number} dy                       - dest y
+   @property {number} ai                       - next ai tick
    @property {number} tg                       - is targeting player?
  */
 
@@ -325,7 +326,9 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} y          - 
    @property {number} w          - 
    @property {number} h          - 
-   @property {number} fc          - facing direction. -1 means left, 1 means right
+   @property {number} fc         - facing direction. -1 means left, 1 means right
+   @property {number} [gd]       - grounded
+   @property {number} [vy]       - velocity y, used for gravity
    @property {IItem} [item]      - 
    @property {IEnemy} [enemy]    - 
  */
@@ -365,7 +368,7 @@ const enemies = [
         hp: 2,
         w: 0.65,
         h: 0.65,
-        sp: 0.04,
+        sp: 0.035,
         b: 'fmp', // behaviors: fly, melee, patrol
     },
     {// 102
@@ -374,17 +377,17 @@ const enemies = [
         hp: 3,
         w: 0.5,
         h: 0.5,
-        sp: 0.04,
+        sp: 0.08,
         b: 'fsp', // behaviors: fly, shooty, patrol
     },
     {// 103
         n: 'Skeleton',
         d: 4, // difficulty rating
         hp: 5,
-        w: 0.8,
-        h: 0.5,
+        w: 0.6,
+        h: 0.9,
         sp: 0.05,
-        b: 'wma', // behaviors: walk, melee, armor?
+        b: 'wmla', // behaviors: walk, melee, armor?
     },
     {// 104
         n: 'Spider',
@@ -573,7 +576,7 @@ const changeMap = (_new_map) => {
         const { x, y } = spawnCandidates.splice(~~(Math.random() * spawnCandidates.length), 1)[0];
         const rarity = randomFrom([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2]);
         const item = cards[randomFrom(rare[rarity])];
-        entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1, item });
+        entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1, vy: 0, item });
     }
 
     transition_progress = 2000;
@@ -633,6 +636,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
             sy,
             dx: sx,
             dy: sy,
+            ai: 0,
             tg: 0,
         };
 
@@ -642,6 +646,8 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
             y: sy,
             w, h,
             fc: 1,
+            vy: 0,
+            gd: 1,
             enemy,
         });
     }
@@ -660,16 +666,19 @@ const takeDamage = () => {
     updateInventoryList();
 };
 
-const dist = (e1, e2) => {
+const displacement = (e1, e2) => {
     const cx1 = e1.x + e1.w / 2;
     const cy1 = e1.y + e1.h / 2;
     const cx2 = e2.x + e2.w / 2;
     const cy2 = e2.y + e2.h / 2;
-    return Math.sqrt((cx1 - cx2) * (cx1 - cx2) + (cy1 - cy2) * (cy1 - cy2));
+    return [(cx1 - cx2), (cy1 - cy2)];
+}
+
+const distance = (disp) => {
+    return Math.sqrt(disp[0] * disp[0] + disp[1] * disp[1]);
 }
 
 const tryMoveX = (/** @type {{x, y, w, h}}*/ entity, dx, map, solidCallback) => {
-    // console.log('input.l 1', ~~(hero_y), ~~(entity.x));
     entity.x += dx;
     if (dx <= 0) {
         entity.x = Math.max(entity.x, 0);
@@ -679,14 +688,32 @@ const tryMoveX = (/** @type {{x, y, w, h}}*/ entity, dx, map, solidCallback) => 
 
     const probeX = (dx <= 0 ? entity.x : entity.x + entity.w);
 
-    // Get the value of the tiles at the left corners of the hero
-    let tile1 = +map[~~(entity.y)][~~(probeX)];
-    let tile2 = +map[~~(entity.y + entity.h - .1)][~~(probeX)];
+    const tile1 = +map[~~(entity.y)][~~(probeX)];
+    const tile2 = +map[~~(entity.y + entity.h - .1)][~~(probeX)];
 
-    // If this tile is solid, put the hero on the right side of it
     if (tile1 == 1 || tile2 == 1) {
         entity.x = (dx <= 0 ? Math.ceil(entity.x) : ~~(entity.x + entity.w) - entity.w);
-        // console.log('input.l =4=', ~~(entity.y + entity.h + dx), ~~(entity.x));
+        if (solidCallback) solidCallback();
+    }
+
+    return entity;
+};
+
+const tryMoveY = (/** @type {{x, y, w, h}}*/ entity, dy, map, solidCallback) => {
+    entity.y += dy;
+    if (dy <= 0) {
+        entity.y = Math.max(entity.y, 0);
+    } else {
+        entity.y = Math.min(map_h - entity.h, entity.y);
+    }
+
+    const probeY = (dy <= 0 ? entity.y : entity.y + entity.h);
+
+    const tile1 = +map[~~(probeY)][~~(entity.x)];
+    const tile2 = +map[~~(probeY)][~~(entity.x + entity.w - .1)];
+
+    if (tile1 == 1 || tile2 == 1) {
+        entity.y = (dy <= 0 ? Math.ceil(entity.y) : ~~(entity.y + entity.h) - entity.h);
         if (solidCallback) solidCallback();
     }
 
@@ -903,30 +930,25 @@ setInterval(() => {
     hero_vy += hero_ay;
     if (hero_vy > 0) hero_g = g2;
     if (hero_vy > 0.2) hero_vy = 0.2;
-    hero_y += hero_vy;
 
-    // Vertical bounds
-    if (hero_y < 0) {
-        hero_y = 0;
-        hero_vy = 0;
-        hero_ay = 0;
-    }
-    if (hero_y > map_h - 1) {
-        return;
-    }
-
-    // Get the value of the tiles at the bottom corners of the hero
-    const tile1 = +map[~~(hero_y + hero_h)][~~(hero_x)];
-    const tile2 = +map[~~(hero_y + hero_h)][~~(hero_x + hero_w - .1)];
-
-    // If this tile is solid, put the hero on top of it (he's grounded)
-    if (tile1 == 1 || tile2 == 1) {
-        hero_y = ~~(hero_y + hero_h) - hero_h;
-        hero_grounded = frameID + 5;
-        hero_vy = 0;
-        hero_g = g1;
-        hero_ay = 0;
-    }
+    hero_y = tryMoveY(
+        { x: hero_x, y: hero_y, w: hero_w, h: hero_h },
+        hero_vy,
+        map,
+        () => {
+            if (hero_vy > 0) {
+                hero_grounded = frameID + 5;
+                hero_vy = 0;
+                hero_g = g1;
+                hero_ay = 0;
+            }
+            // If moving up
+            if (hero_vy < 0) {
+                // If this tile is solid, put the hero on the bottom side of it and let it fall
+                hero_vy = 0;
+            }
+        }
+    ).y;
 
     if (transition_progress != 0) {
         input.l = 0;
@@ -934,20 +956,6 @@ setInterval(() => {
         input.u = 0;
         input.d = 0;
     } else {
-
-        // If moving up
-        if (hero_vy < 0) {
-
-            // Get the value of the tiles at the top corners of the hero
-            const tile1 = +map[~~(hero_y)][~~(hero_x)];
-            const tile2 = +map[~~(hero_y)][~~(hero_x + hero_w - .1)];
-
-            // If this tile is solid, put the hero on the bottom side of it and dont modify vertical speed
-            if (tile1 == 1 || tile2 == 1) {
-                hero_y = Math.ceil(hero_y);
-                // hero_vy = 0;
-            }
-        }
         // If left key is pressed, go left
         if (input.l) {
             hero_dir_x = -1;
@@ -976,7 +984,6 @@ setInterval(() => {
                     }
                 }
             ).x;
-
         }
 
         // If up key is pressed and the hero is grounded, jump
@@ -1014,42 +1021,88 @@ setInterval(() => {
             const e = entities[index];
             const { type, x, y, w, h } = e;
 
-            const tickIndex = ~~(Math.random() * frameID + 2 * (index % 20));
             // console.log(tickIndex);
-            if (type == 'E' && tickIndex % aiTicks == 0) {
+            if (type == 'E') {
                 // console.log(`------------------------ ai ${index}`);
                 // AI update
                 const wanderDist = 1;
                 const patrolDist = 3;
-                const { b } = e.enemy;
-                [...b].forEach(behaviour => {
-                    switch (behaviour) {
-                        case 'w':
-                            e.enemy.dx = x + Math.random() * wanderDist * 2 - wanderDist;
-                            e.enemy.dy = y;
-                            break;
-                        case 'f':
-                            e.enemy.dx = x + Math.random() * wanderDist * 2 - wanderDist;
-                            e.enemy.dy = y + Math.random() * wanderDist * 2 - wanderDist;
-                            break;
-                    }
-                    e.enemy.tg = +(dist(e, { x: hero_x, y: hero_y, w: hero_w, h: hero_h }) < 4);
-                });
+                const enemy = e.enemy;
 
+                const disp = displacement(e, { x: hero_x, y: hero_y, w: hero_w, h: hero_h });
+                const dist = distance(disp);
+
+                enemy.tg = +(dist < 6);
+
+                if (enemy.tg && enemy.ai - frameID > 50) enemy.ai = frameID + 50;
+
+                if (frameID >= enemy.ai) {
+                    [...enemy.b].forEach(behavior => {
+                        if (behavior == 'w') {
+                            if (enemy.tg) {
+                                enemy.dx = hero_x + Math.sign(disp[0]) * 2;
+                                enemy.dy = y;
+                            } else {
+                                enemy.dx = x + Math.random() * wanderDist * 2 - wanderDist;
+                                enemy.dy = y;
+                            }
+                        }
+                        if (behavior == 'f') {
+                            if (enemy.tg) {
+                                enemy.dx = hero_x + disp[0] / dist * 2;
+                                enemy.dy = hero_y + disp[1] / dist * 2;
+                            } else {
+                                enemy.dx = x + Math.random() * wanderDist * 2 - wanderDist;
+                                enemy.dy = y + Math.random() * wanderDist * 2 - wanderDist;
+                            }
+                        }
+                        if (behavior == 'm') {
+                            if (enemy.b.includes('w')) {
+                                if (disp[0] < 3) {
+                                    enemy.dx = hero_x;
+                                    enemy.dy = y;
+                                }
+                            } else {
+                                if (dist < 4) {
+                                    enemy.dx = hero_x;
+                                    enemy.dy = hero_y;
+                                }
+                            }
+                        }
+                        if (behavior == 'l') {
+                            if (enemy.b.includes('w') && enemy.b.includes('m')) {
+                                if (disp[0] < 3) {
+                                    if (e.gd) { e.vy = -.3; e.gd = 0; }
+                                }
+                            }
+                        }
+                    });
+
+                    e.enemy.ai = frameID + (e.enemy.tg ?
+                        ~~(Math.random() * 40 + 40) :
+                        ~~(Math.random() * 320 + 80));
+                }
             }
             if (type == 'E') {
                 // actual enemy update
-                const { b, dx, sp, tg } = e.enemy;
+                const { b, dx, sp, tg } = e.enemy; // behaviors, dest x, speed, targeting player
                 if (b.includes('f')) flyToDestAtSpeed(e);
                 if (b.includes('w')) {
+
                     e.fc = dx == x ? e.fc : Math.sign(dx - x);
                     const deltaX = Math.sign(dx - x) * Math.min(Math.abs(dx - x), sp);
                     tryMoveX(e, deltaX, map);
+                    e.vy += g1;
+                    tryMoveY(e, e.vy, map, () => {
+                        if (e.vy > 0) e.gd = 1;
+                        e.vy = 0;
+                    });
                 }
-                if (tg) e.fc = Math.sign(hero_x - x);
+                if (tg) e.fc = (hero_x > x ? 1 : -1);
             }
 
-            const hasCollision = (hero_x < x + w &&
+            const hasCollision = (
+                hero_x < x + w &&
                 hero_x + hero_w > x &&
                 hero_y < y + h &&
                 hero_y + hero_h > y);
@@ -1114,7 +1167,7 @@ setInterval(() => {
         if (type == 'E') {
             // c.fillStyle = "red";
             // c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
-            const { n, d, hp, sp, b, dx, dy } = e.enemy;
+            const { n, d, hp, sp, b, dx, dy, tg } = e.enemy;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
             switch (n) {
@@ -1145,7 +1198,9 @@ setInterval(() => {
                     break;
             }
             c.fillStyle = "black";
-            c.fillText(`d(${dx.toFixed(1)}, ${dy.toFixed(1)})`, cx * tile_w, (y - 0.2 - scroll_y) * tile_h);
+            c.textAlign = 'center';
+            c.fillText(`${tg ? '!!' : ''}`, cx * tile_w, (y - 0.2 - scroll_y - 0.3) * tile_h);
+            // c.fillText(`d(${dx.toFixed(1)}, ${dy.toFixed(1)})`, cx * tile_w, (y - 0.2 - scroll_y) * tile_h);
         }
         if (type == 'T') {
             const { item } = e;
