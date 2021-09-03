@@ -29,18 +29,13 @@ Manage your life priorities vs earnings in this dark adventure game
   - [ ] dash
   - [x] getting items
 - [x] inventory queue linked to hp
-  - [ ] become invincible when being take damage
+  - [ ] become invincible when taking damage
 - [ ] enemies behaviors
-  - [ ] p = patrol
-  - [ ] h = hang
-  - [ ] w = walk
-  - [ ] m = melee (leap attack, body cannot touch)
-  - [ ] a = armor? (allow hp+3)
-  - [ ] f = fly
+  - [x] w = walk
+  - [x] m = melee (leap 1 block, body cannot touch)
+  - [x] l = leap higher when attack
+  - [x] f = fly
   - [ ] s = shooty
-  - [ ] e = element! (diff+3, take 0 or take 2 instead of take 1 damage)
-  - [ ] v = venom (every 3 second, have a low chance to take damage)
-  - [ ] y = heavy (cannot be knocked back)
 - [x] reorganize items in queue
 - [x] items to get (treasure box, sword and wands)
 - [ ] score system
@@ -48,6 +43,15 @@ Manage your life priorities vs earnings in this dark adventure game
 - [x] discard multiple health cards to unlock a card
   - [ ] animations for unlocking health
 - [ ] friends and family and doctor
+- [ ] additional enemy behaviors
+  - [ ] a = armor? (allow hp+3)
+  - [ ] e = element! (diff+3, take 0 or take 2 instead of take 1 damage)
+  - [ ] v = venom (every 3 second, have a low chance to take damage)
+  - [ ] y = heavy (cannot be knocked back)
+  - [ ] p = patrol
+  - [ ] h = hang
+  - [ ] z = laser
+  - [ ] x = explosion
 - [ ] MVP done
 - [ ] after playtest,
   - [ ] optional curse of binding and optional losing self or mind
