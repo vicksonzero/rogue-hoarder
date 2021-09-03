@@ -320,6 +320,13 @@ for (let i = 0; i < tiers.length; i++) {
  */
 
 /**
+ * @typedef ITransform
+   @property {number} x          - 
+   @property {number} y          - 
+   @property {number} w          - 
+   @property {number} h          - 
+ */
+/**
  * @typedef IEntity
    @property {string} type       - 
    @property {number} x          - 
@@ -666,7 +673,11 @@ const takeDamage = () => {
     updateInventoryList();
 };
 
-const displacement = (e1, e2) => {
+const knockBack = (/** @type {IEntity}*/attacker, /** @type {IEntity}*/defender) => {
+
+}
+
+const displacement = (/** @type {ITransform}*/e1, /** @type {ITransform}*/e2) => {
     const cx1 = e1.x + e1.w / 2;
     const cy1 = e1.y + e1.h / 2;
     const cx2 = e2.x + e2.w / 2;
