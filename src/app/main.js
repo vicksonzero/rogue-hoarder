@@ -563,7 +563,7 @@ const changeMap = (_new_map) => {
     }
 
     if (scene == 'd') {
-        const { x, y } = doorCandidates.splice(Math.floor(Math.random() * doorCandidates.length), 1)[0];
+        const { x, y } = doorCandidates.splice(~~(Math.random() * doorCandidates.length), 1)[0];
         hero_x = x;
         hero_y = y;
     }
@@ -574,17 +574,17 @@ const changeMap = (_new_map) => {
     const treasureCount = 10;
 
     for (let i = 0; doorCandidates.length && i < doorCount; i++) {
-        const { x, y } = doorCandidates.splice(Math.floor(Math.random() * doorCandidates.length), 1)[0];
+        const { x, y } = doorCandidates.splice(~~(Math.random() * doorCandidates.length), 1)[0];
         entities.push({ type: 'D', x: x + 0.1, y: y - 0.6, w: 0.8, h: 1.6, fc: 1 });
     }
     for (let i = 0; spikeCandidates.length && i < spikeCount; i++) {
-        const { x, y } = spikeCandidates.splice(Math.floor(Math.random() * spikeCandidates.length), 1)[0];
+        const { x, y } = spikeCandidates.splice(~~(Math.random() * spikeCandidates.length), 1)[0];
         entities.push({ type: '3', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1 });
     }
     entities = entities.concat(spawnEnemy(spawnCandidates, enemyCount));
 
     for (let i = 0; spawnCandidates.length && i < treasureCount; i++) {
-        const { x, y } = spawnCandidates.splice(Math.floor(Math.random() * spawnCandidates.length), 1)[0];
+        const { x, y } = spawnCandidates.splice(~~(Math.random() * spawnCandidates.length), 1)[0];
         const rarity = randomFrom([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2]);
         const item = cards[randomFrom(rare[rarity])];
         entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1, item });
@@ -633,7 +633,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
     let enemy;
 
     for (let i = 0; spawnCandidates.length && i < enemyCount; i++) {
-        const { x, y } = spawnCandidates[Math.floor(Math.random() * spawnCandidates.length)];
+        const { x, y } = spawnCandidates[~~(Math.random() * spawnCandidates.length)];
 
         const enemyDef = enemies[randomFrom([1, 0])];
         const { w, h } = enemyDef;
@@ -683,7 +683,7 @@ const dist = (e1, e2) => {
 }
 
 const tryMoveX = (/** @type {{x, y, w, h}}*/ entity, dx, map, solidCallback) => {
-    // console.log('input.l 1', Math.floor(hero_y), Math.floor(entity.x));
+    // console.log('input.l 1', ~~(hero_y), ~~(entity.x));
     entity.x += dx;
     if (dx <= 0) {
         entity.x = Math.max(entity.x, 0);
@@ -694,13 +694,13 @@ const tryMoveX = (/** @type {{x, y, w, h}}*/ entity, dx, map, solidCallback) => 
     const probeX = (dx <= 0 ? entity.x : entity.x + entity.w);
 
     // Get the value of the tiles at the left corners of the hero
-    let tile1 = +map[Math.floor(entity.y)][Math.floor(probeX)];
-    let tile2 = +map[Math.floor(entity.y + entity.h - .1)][Math.floor(probeX)];
+    let tile1 = +map[~~(entity.y)][~~(probeX)];
+    let tile2 = +map[~~(entity.y + entity.h - .1)][~~(probeX)];
 
     // If this tile is solid, put the hero on the right side of it
     if (tile1 == 1 || tile2 == 1) {
-        entity.x = (dx <= 0 ? Math.ceil(entity.x) : Math.floor(entity.x + entity.w) - entity.w);
-        // console.log('input.l =4=', Math.floor(entity.y + entity.h + dx), Math.floor(entity.x));
+        entity.x = (dx <= 0 ? Math.ceil(entity.x) : ~~(entity.x + entity.w) - entity.w);
+        // console.log('input.l =4=', ~~(entity.y + entity.h + dx), ~~(entity.x));
         if (solidCallback) solidCallback();
     }
 
@@ -908,12 +908,12 @@ setInterval(() => {
     }
 
     // Get the value of the tiles at the bottom corners of the hero
-    const tile1 = +map[Math.floor(hero_y + hero_h)][Math.floor(hero_x)];
-    const tile2 = +map[Math.floor(hero_y + hero_h)][Math.floor(hero_x + hero_w - .1)];
+    const tile1 = +map[~~(hero_y + hero_h)][~~(hero_x)];
+    const tile2 = +map[~~(hero_y + hero_h)][~~(hero_x + hero_w - .1)];
 
     // If this tile is solid, put the hero on top of it (he's grounded)
     if (tile1 == 1 || tile2 == 1) {
-        hero_y = Math.floor(hero_y + hero_h) - hero_h;
+        hero_y = ~~(hero_y + hero_h) - hero_h;
         hero_grounded = frameID + 5;
         hero_vy = 0;
         hero_g = g1;
@@ -931,8 +931,8 @@ setInterval(() => {
         if (hero_vy < 0) {
 
             // Get the value of the tiles at the top corners of the hero
-            const tile1 = +map[Math.floor(hero_y)][Math.floor(hero_x)];
-            const tile2 = +map[Math.floor(hero_y)][Math.floor(hero_x + hero_w - .1)];
+            const tile1 = +map[~~(hero_y)][~~(hero_x)];
+            const tile2 = +map[~~(hero_y)][~~(hero_x + hero_w - .1)];
 
             // If this tile is solid, put the hero on the bottom side of it and make him fall
             if (tile1 == 1 || tile2 == 1) {
@@ -1065,8 +1065,6 @@ setInterval(() => {
     scroll_y = Math.max(0, Math.min(hero_y - cam_hh, map_h - cam_hh - cam_hh));
 
     // Draw map
-    const draw_x = Math.floor(scroll_x);
-    const draw_y = Math.floor(scroll_y);
     if (scene == 'd') {
         c.drawImage(a_cache,
             scroll_x * tile_w, scroll_y * tile_h,
@@ -1075,8 +1073,8 @@ setInterval(() => {
             a.width, a.height
         );
     } else {
-        for (let x = draw_x; x < map_w && x <= draw_x + 23; x++) {
-            for (let y = draw_y; y < map_h && y <= draw_y + 16; y++) {
+        for (let x = 0; x < map_w; x++) {
+            for (let y = 0; y < map_h; y++) {
                 const tile = map[y][x];
                 if (tile == '1') {
                     c.fillStyle = "green";
