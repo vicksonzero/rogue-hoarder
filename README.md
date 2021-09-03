@@ -25,9 +25,18 @@ Manage your life priorities vs earnings in this dark adventure game
   - [x] poking sword
     - [ ] sword hurting enemies (and cause knockbacks)
   - [ ] shooting magic
+  - [ ] block with shield
+  - [ ] block with armor
+  - [ ] heal with potion
   - [x] climbing walls
   - [ ] dash
   - [x] getting items
+  - [ ] see color
+  - [ ] use torch
+  - [ ] hear enemies
+  - [ ] speak
+  - [ ] love one another
+  - [ ] heal from friends and family
 - [x] inventory queue linked to hp
   - [ ] become invincible when taking damage
 - [ ] enemies behaviors
