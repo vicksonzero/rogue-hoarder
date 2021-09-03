@@ -942,10 +942,10 @@ setInterval(() => {
             const tile1 = +map[~~(hero_y)][~~(hero_x)];
             const tile2 = +map[~~(hero_y)][~~(hero_x + hero_w - .1)];
 
-            // If this tile is solid, put the hero on the bottom side of it and make him fall
+            // If this tile is solid, put the hero on the bottom side of it and dont modify vertical speed
             if (tile1 == 1 || tile2 == 1) {
                 hero_y = Math.ceil(hero_y);
-                hero_vy = 0;
+                // hero_vy = 0;
             }
         }
         // If left key is pressed, go left
