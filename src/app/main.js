@@ -951,23 +951,31 @@ setInterval(() => {
         // If left key is pressed, go left
         if (input.l) {
             hero_dir_x = -1;
-            hero_x = tryMoveX({ x: hero_x, y: hero_y, w: hero_w, h: hero_h }, -.1, map, () => {
-
-                if (can_do_climb) {
-                    hero_vy = -.07;
+            hero_x = tryMoveX(
+                { x: hero_x, y: hero_y, w: hero_w, h: hero_h },
+                -.1,
+                map,
+                () => {
+                    if (can_do_climb) {
+                        hero_vy = -.07;
+                    }
                 }
-            }).x;
+            ).x;
         }
 
         // If right key is pressed, go right
         if (input.r) {
             hero_dir_x = 1;
-            hero_x = tryMoveX({ x: hero_x, y: hero_y, w: hero_w, h: hero_h }, .1, map, () => {
-
-                if (can_do_climb) {
-                    hero_vy = -.07;
+            hero_x = tryMoveX(
+                { x: hero_x, y: hero_y, w: hero_w, h: hero_h },
+                .1,
+                map,
+                () => {
+                    if (can_do_climb) {
+                        hero_vy = -.07;
+                    }
                 }
-            }).x;
+            ).x;
 
         }
 
