@@ -17,8 +17,10 @@ const c = a.getContext("2d");
 c.imageSmoothingEnabled = false;
 
 // cache
-const a_cache = document.createElement("canvas");
-const a_cache_c = a_cache.getContext('2d');
+const a_dungeon_cache = document.createElement("canvas");
+const a_dungeon_cache_c = a_dungeon_cache.getContext('2d');
+const a_home_cache = document.createElement("canvas");
+const a_home_cache_c = a_home_cache.getContext('2d');
 
 // Map
 const map_dungeon = [
@@ -440,8 +442,14 @@ const enemies = [
     },
 ];
 
-console.log(cards, tiers, rare, enemies);
+// console.log(cards, tiers, rare, enemies);
 
+
+// World
+const g1 = 0.012;    // gravity in tiles/frame²
+const g2 = 0.018;    // gravity in tiles/frame²
+const tile_w = 32;  // tiles width in px
+const tile_h = 32;  // tiles height in px
 
 // existence
 // // none
@@ -484,28 +492,6 @@ let map_h = map.length;     // map height in tiles
 let entities = [];
 let frameID = 0;
 
-/* #IfDev */
-window['test'] = {
-    get entities() { return entities },
-    get cards() { return cards },
-    get transition_progress() { return transition_progress },
-    get lostAbilities() { return lostAbilities },
-    get inventory() { return inventory },
-
-    //@ts-ignore
-    get tiers() { return tiers.map(tier => tier.map(_i => ({ ...cards[_i], _i }))) },
-    //@ts-ignore
-    get rare() { return rare.map(tier => tier.map(_i => ({ ...cards[i], _i }))) },
-    set aiTicks(val) { aiTicks = val; },
-};
-/* #EndIfDev */
-
-
-// World
-const g1 = 0.012;    // gravity in tiles/frame²
-const g2 = 0.018;    // gravity in tiles/frame²
-const tile_w = 32;  // tiles width in px
-const tile_h = 32;  // tiles height in px
 
 // Hero
 let hero_w = .6;  // hero width in tiles 
@@ -791,6 +777,18 @@ const fillRectC = (/** @type {CanvasRenderingContext2D} */ c, cx, cy, w, h, fill
     if (stroke) { c.strokeStyle = stroke; c.stroke(); }
 }
 
+const cache_map = (cache, cache_c, _map) => {
+    // -10 bytes zipped compared to nested for-loops
+    cache.width = _map[0].length * tile_w;
+    cache.height = _map.length * tile_h;
+    _map.forEach((row, y) => row.split('').forEach((tile, x) => {
+        if (tile == '1') {
+            cache_c.fillStyle = "green";
+            cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
+        }
+    }));
+}
+
 // Inputs (see https://xem.github.io/articles/jsgamesinputs.html)
 const input = {
     u: 0,
@@ -849,18 +847,28 @@ window.addEventListener('keyup', keyHandler);
 
 // main
 
+/* #IfDev */
+window['test'] = {
+    get entities() { return entities },
+    get cards() { return cards },
+    get transition_progress() { return transition_progress },
+    get lostAbilities() { return lostAbilities },
+    get inventory() { return inventory },
+
+    //@ts-ignore
+    get tiers() { return tiers.map(tier => tier.map(_i => ({ ...cards[_i], _i }))) },
+    //@ts-ignore
+    get rare() { return rare.map(tier => tier.map(_i => ({ ...cards[i], _i }))) },
+    set aiTicks(val) { aiTicks = val; },
+};
+/* #EndIfDev */
+
+cache_map(a_dungeon_cache, a_dungeon_cache_c, map_dungeon);
+cache_map(a_home_cache, a_home_cache_c, map_home);
+
 changeMap('h');
 
-a_cache.width = map_dungeon[0].length * tile_w;
-a_cache.height = map_dungeon.length * tile_h;
 
-// -10 bytes zipped compared to nested for-loops
-map_dungeon.forEach((row, y) => row.split('').forEach((tile, x) => {
-    if (tile == '1') {
-        a_cache_c.fillStyle = "green";
-        a_cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
-    }
-}));
 updateInventoryList();
 
 window['prioritize'] = (i) => {
@@ -1065,25 +1073,13 @@ setInterval(() => {
     scroll_y = Math.max(0, Math.min(hero_y - cam_hh, map_h - cam_hh - cam_hh));
 
     // Draw map
-    if (scene == 'd') {
-        c.drawImage(a_cache,
-            scroll_x * tile_w, scroll_y * tile_h,
-            a.width, a.height,
-            0, 0,
-            a.width, a.height
-        );
-    } else {
-        for (let x = 0; x < map_w; x++) {
-            for (let y = 0; y < map_h; y++) {
-                const tile = map[y][x];
-                if (tile == '1') {
-                    c.fillStyle = "green";
-                    c.rect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, tile_w, tile_h);
-                    c.fill();
-                }
-            }
-        }
-    }
+    c.drawImage(
+        (scene == 'd' ? a_dungeon_cache : a_home_cache),
+        scroll_x * tile_w, scroll_y * tile_h,
+        a.width, a.height,
+        0, 0,
+        a.width, a.height
+    );
     // // draw coordinates
     // for (let x = draw_x; x < map_w && x <= draw_x + 23; x++) {
     //     for (let y = draw_y; y < map_h && y <= draw_y + 16; y++) {
