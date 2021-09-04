@@ -96,12 +96,23 @@ const map_home = [
 
 
 /**
+ * @typedef ICard
+   @property {string} n - name
+   @property {string} i - icon
+   @property {number} rq - card requirements
+   @property {number} [t] - card tier
+ */
+/**
  * @typedef IItem
    @property {string} n - name
    @property {string} i - icon
    @property {number} rq - card requirements
+   @property {number} [t] - card tier
+   @property {number} [nw] - 1=new? 0=old -1=removing
  */
 
+
+/** @type {ICard[]} */
 const cards = [
     {// 0
         n: '', // name
@@ -336,7 +347,7 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} fc         - facing direction. -1 means left, 1 means right
    @property {number} [gd]       - grounded
    @property {number} [vy]       - velocity y, used for gravity
-   @property {IItem} [item]      - 
+   @property {ICard} [item]      - 
    @property {IEnemy} [enemy]    - 
  */
 
@@ -517,7 +528,10 @@ let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been re
 let hero_stabby = 0;  // hero can stab
 let hero_can_stab = 1;  // hero can stab
 let hero_tier = 3; // used to unlock health cards
+
+/** @type {Array<IItem>} */
 let inventory = [3, 30, 0, 0].map(i => (cards[i]));
+let lost_inventory = [];
 let inventory_size = inventory.length;
 let lostAbilities = [];
 
@@ -602,7 +616,7 @@ const pauseGame = () => {
         xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
         updateInventoryList();
     } else {
-        inventory.length = inventory_size;
+        if (inventory.length > inventory_size) lost_inventory = [inventory.pop()];
         transition_progress = 0;
 
         updateAbilityList();
@@ -614,13 +628,65 @@ const pauseGame = () => {
 
 const updateInventoryList = () => {
     l.innerHTML = (inventory.slice(0, inventory_size)
-        .map(({ n, i, t }, _i) => `<div class="card c-${t}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
+        .map(({ n, i, t, nw }, _i) => `<div class="card c-${t}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
         .join('') +
         '<div>←💀</div>' +
         (inventory.length <= inventory_size ? '' : `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${inventory[inventory_size].n}</div><div>→🗑</div>`)
     );
-    h.innerHTML = inventory.map(({ i, t }, _i) => `<div class="card c-${t}" data-c=${_i}>${i}</div>`).join('');
+    h.innerHTML = inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}" data-c=${_i}>${i}</div>`).join('');
+    h.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}>${i}</div>`).join('');
+    lost_inventory = [];
 };
+
+const updateAbilityList = () => {
+    const old_tier = hero_tier;
+    if (hero_tier == 3 && !inventory.find(card => card.n == 'health')) { // if health is lost
+        hero_tier = 2;
+    } else if (hero_tier == 2 && inventory.filter(card => card.t == 2).length <= 1) { // if enough tier 2 is lost
+        hero_tier = 1;
+    } else if (hero_tier == 1 && inventory.filter(card => card.t == 1).length <= 1) { // if enough tier 1 is lost
+        hero_tier = 0;
+    }
+
+    if (old_tier != hero_tier) {
+        tiers[hero_tier].forEach(id => {
+            inventory.unshift({ ...cards[id], nw: 1 });
+        });
+        inventory_size = inventory.length;
+    }
+
+    can_do_run = (hero_tier >= 2 || inventory.some(card => card.n == 'run'));
+    can_do_jump = (hero_tier >= 2 || inventory.some(card => card.n == 'jump'));
+    can_do_wield = (hero_tier >= 2 || inventory.some(card => card.n == 'hands'));
+    can_do_sight = (hero_tier >= 2 || inventory.some(card => card.n == 'sight'));
+    can_do_hear = (hero_tier >= 2 || inventory.some(card => card.n == 'hear'));
+    can_do_family = (hero_tier >= 2 || inventory.some(card => card.n == 'family'));
+    can_do_friends = (hero_tier >= 2 || inventory.some(card => card.n == 'friends'));
+
+    // health
+    can_do_sort = (hero_tier >= 3 || inventory.some(card => card.n == 'mind'));
+    can_do_armor = (hero_tier >= 3 || inventory.some(card => card.n == 'strength'));
+    can_do_color = (hero_tier >= 3 || inventory.some(card => card.n == 'color'));
+    can_do_speech = (hero_tier >= 3 || inventory.some(card => card.n == 'speech'));
+
+    // skill
+    can_do_dash = (inventory.some(card => card.n == 'dash'));
+    can_do_climb = (inventory.some(card => card.n == 'climb'));
+
+    // items
+    can_do_sword = (inventory.some(card => card.n == 'sword'));
+    can_do_wand = (inventory.some(card => card.n == 'wand'));
+    can_do_shield = (inventory.some(card => card.n == 'shield'));
+    can_do_torch = (inventory.some(card => card.n == 'torch'));
+
+    update_can_do_torch();
+
+};
+
+const update_can_do_torch = () => {
+    a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
+    a.height = (can_do_torch ? 480 : 320);
+}
 
 const spawnEnemy = (spawnCandidates, enemyCount) => {
     /** @type {IEntity[]} */
@@ -663,11 +729,12 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
 };
 
 const takeDamage = () => {
+    inventory.forEach(e => e.nw = 0);
     const lastItem = inventory[inventory.length - 1];
     if (inventory.findIndex(item => item.n == lastItem.n) < 30) { // is ability
         lostAbilities.push(lastItem);
     }
-    inventory.pop();
+    lost_inventory = [inventory.pop()];
     inventory_size = inventory.length;
     updateAbilityList();
     updateInventoryList();
@@ -746,66 +813,17 @@ const randomFrom = (arr) => {
 };
 
 const addItem = (item) => {
+    inventory.forEach(e => e.nw = 0);
     const id = inventory.findIndex(item => item.n == '');
     if (id < 0) {
-        inventory.push(item);
+        inventory.push({ ...item, nw: 1 });
         pauseGame();
     } else {
-        inventory[id] = item;
+        inventory[id] = { ...item, nw: 1 };
         updateAbilityList();
         updateInventoryList();
     }
 };
-
-const updateAbilityList = () => {
-    const old_tier = hero_tier;
-    if (hero_tier == 3 && !inventory.find(card => card.n == 'health')) { // if health is lost
-        hero_tier = 2;
-    } else if (hero_tier == 2 && inventory.filter(card => card.t == 2).length <= 1) { // if enough tier 2 is lost
-        hero_tier = 1;
-    } else if (hero_tier == 1 && inventory.filter(card => card.t == 1).length <= 1) { // if enough tier 1 is lost
-        hero_tier = 0;
-    }
-
-    if (old_tier != hero_tier) {
-        tiers[hero_tier].forEach(id => {
-            inventory.unshift(cards[id]);
-        });
-        inventory_size = inventory.length;
-    }
-
-    can_do_run = (hero_tier >= 2 || inventory.some(card => card.n == 'run'));
-    can_do_jump = (hero_tier >= 2 || inventory.some(card => card.n == 'jump'));
-    can_do_wield = (hero_tier >= 2 || inventory.some(card => card.n == 'hands'));
-    can_do_sight = (hero_tier >= 2 || inventory.some(card => card.n == 'sight'));
-    can_do_hear = (hero_tier >= 2 || inventory.some(card => card.n == 'hear'));
-    can_do_family = (hero_tier >= 2 || inventory.some(card => card.n == 'family'));
-    can_do_friends = (hero_tier >= 2 || inventory.some(card => card.n == 'friends'));
-
-    // health
-    can_do_sort = (hero_tier >= 3 || inventory.some(card => card.n == 'mind'));
-    can_do_armor = (hero_tier >= 3 || inventory.some(card => card.n == 'strength'));
-    can_do_color = (hero_tier >= 3 || inventory.some(card => card.n == 'color'));
-    can_do_speech = (hero_tier >= 3 || inventory.some(card => card.n == 'speech'));
-
-    // skill
-    can_do_dash = (inventory.some(card => card.n == 'dash'));
-    can_do_climb = (inventory.some(card => card.n == 'climb'));
-
-    // items
-    can_do_sword = (inventory.some(card => card.n == 'sword'));
-    can_do_wand = (inventory.some(card => card.n == 'wand'));
-    can_do_shield = (inventory.some(card => card.n == 'shield'));
-    can_do_torch = (inventory.some(card => card.n == 'torch'));
-
-    update_can_do_torch();
-
-};
-
-const update_can_do_torch = () => {
-    a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
-    a.height = (can_do_torch ? 480 : 320);
-}
 
 const fillRectC = (/** @type {CanvasRenderingContext2D} */ c, cx, cy, w, h, fill, stroke) => {
     c.beginPath();

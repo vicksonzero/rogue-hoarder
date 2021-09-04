@@ -70,6 +70,7 @@ body {
   flex-direction: column;
   justify-content: center;
   user-select: none;
+
 }
 .card i {
   font-size: 200%;
@@ -91,9 +92,30 @@ body {
   background: #fff;
 }
 #h .card {
-  width: 20px;
-  height: 28px;
+  width: 30px;
+  height: 40px;
   border: 1px black solid;
   margin-right: 2px;
-  font-size: 14px;
+  font-size: 20px;
+}
+
+.card.out {
+  animation: slideIn 1s ease-out reverse forwards;
+}
+
+.card.in {
+  animation: slideIn 1s ease-out forwards;
+}
+
+
+@keyframes slideIn {
+  from {
+    transform: scale(1.6) translate(10px, 30px) rotate(40deg);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
 }
