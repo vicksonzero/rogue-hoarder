@@ -63,14 +63,12 @@ body {
   background: #fff;
   color: #000;
   margin: 1px;
-  font-size: 18px;
   text-align: center;
   font-size: 13px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   user-select: none;
-
 }
 .card i {
   font-size: 200%;
@@ -100,13 +98,12 @@ body {
 }
 
 .card.out {
-  animation: slideIn 1s ease-out reverse forwards;
+  animation: slideIn 1s ease-out forwards reverse;
 }
 
 .card.in {
   animation: slideIn 1s ease-out forwards;
 }
-
 
 @keyframes slideIn {
   from {
