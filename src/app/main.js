@@ -675,13 +675,15 @@ const updateAbilityList = () => {
     can_do_shield = (inventory.some(card => card.n == 'shield'));
     can_do_torch = (inventory.some(card => card.n == 'torch'));
 
-    update_can_do_torch();
-
+    update_can_do_vision();
 };
 
-const update_can_do_torch = () => {
+const update_can_do_vision = () => {
     a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
     a.height = (can_do_torch ? 480 : 320);
+
+    console.log('update_can_do_vision');
+    a.style.filter = `grayscale(${can_do_color ? 0 : 1})`;
 }
 
 const spawnEnemy = (spawnCandidates, enemyCount) => {
@@ -888,7 +890,7 @@ const keyHandler = (e) => {
 
     if (input.c1 && 'c1' == keyMap[w]) {
         can_do_torch = !can_do_torch;
-        update_can_do_torch();
+        update_can_do_vision();
         input.c1 = 0;
     }
     if (input.s && 's' == keyMap[w]) {
@@ -917,7 +919,7 @@ window['test'] = {
     get tiers() { return tiers.map(tier => tier.map(_i => ({ ...cards[_i], _i }))) },
     //@ts-ignore
     get rare() { return rare.map(tier => tier.map(_i => ({ ...cards[i], _i }))) },
-    set aiTicks(val) { aiTicks = val; },
+    get hero_tier() { return hero_tier; },
 };
 /* #EndIfDev */
 
