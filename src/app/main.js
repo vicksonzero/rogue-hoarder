@@ -987,11 +987,11 @@ setInterval(() => {
         input.d = 0;
     } else {
         // If left key is pressed, go left
-        if (input.l) hero.fc = -1;
-        if (input.r) hero.fc = 1;
+        const mv = input.l ? -1 : input.r ? 1 : 0;
+        hero.fc = mv || hero.fc;
         tryMoveX(
             hero,
-            (input.l || input.r ? hero.fc : 0) * .1 + hero.vx,
+            mv * .1 + hero.vx,
             map,
             () => {
                 if (can_do_climb) {
