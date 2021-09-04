@@ -281,7 +281,7 @@ const cards = [
 ];
 
 const tiers = [
-    /* 0 = existence */[1, 2], // 3 is the health card
+    /* 0 = existence */[2, 1], // 3 is the health card
     /* 1 = being     */[5, 6, 7, 8, 9, 10, 11],
     /* 2 = health    */[12, 13, 14, 17, 4],
     /* 3 = skill     */[15, 16],
@@ -346,6 +346,7 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} h          - 
    @property {number} fc         - facing direction. -1 means left, 1 means right
    @property {number} [gd]       - grounded
+   @property {number} [vx]       - velocity x, used for knock back or others
    @property {number} [vy]       - velocity y, used for gravity
    @property {ICard} [item]      - 
    @property {IEnemy} [enemy]    - 
@@ -515,15 +516,10 @@ let frameID = 0;
 
 
 // Hero
-let hero_w = .6;  // hero width in tiles 
-let hero_h = 1;  // hero height in tiles
-let hero_x = 10;   // X position in tiles
-let hero_y = 2;   // Y position in tiles
-let hero_vy = 0;  // Y speed
-let hero_g = g1;
-let hero_ay = 0;  // Y acceleration
-let hero_dir_x = 1;  // facing X direction
-let hero_grounded = 0; // hero is grounded
+/** @type {IEntity} */
+let hero = { x: 10, y: 2, w: .6, h: 1, fc: 1, type: 'hero', vx: 0, vy: 0, gd: 1 };
+let hero_g = g1;  // Y acceleration
+let hero_inv = 0;  // invincible until
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
 let hero_stabby = 0;  // hero can stab
 let hero_can_stab = 1;  // hero can stab
@@ -546,11 +542,11 @@ const changeMap = (_new_map) => {
     map_h = map.length;     // map height in tiles
     entities = [];
     if (scene == 'd') {
-        hero_x = 9;
-        hero_y = 5;
+        hero.x = 9;
+        hero.y = 5;
     } else {
-        hero_x = 9;
-        hero_y = 5;
+        hero.x = 9;
+        hero.y = 5;
     }
 
     const doorCandidates = [];
@@ -574,8 +570,8 @@ const changeMap = (_new_map) => {
 
     if (scene == 'd') {
         const { x, y } = doorCandidates.splice(~~(Math.random() * doorCandidates.length), 1)[0];
-        hero_x = x;
-        hero_y = y;
+        hero.x = x;
+        hero.y = y;
     }
 
     const doorCount = 3;
@@ -608,7 +604,7 @@ const pauseGame = () => {
     paused = !paused;
 
     if (paused) {
-        console.log('pauseGame');
+        // console.log('pauseGame');
         transition_progress = -1000;
 
         p.style.display = 'block';
@@ -719,6 +715,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
             y: sy,
             w, h,
             fc: 1,
+            vx: 0,
             vy: 0,
             gd: 1,
             enemy,
@@ -729,6 +726,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
 };
 
 const takeDamage = () => {
+    // console.log('takeDamage!');
     inventory.forEach(e => e.nw = 0);
     const lastItem = inventory[inventory.length - 1];
     if (inventory.findIndex(item => item.n == lastItem.n) < 30) { // is ability
@@ -736,20 +734,24 @@ const takeDamage = () => {
     }
     lost_inventory = [inventory.pop()];
     inventory_size = inventory.length;
+    hero_inv = frameID + 120; // 3s
     updateAbilityList();
     updateInventoryList();
 };
 
 const knockBack = (/** @type {IEntity}*/attacker, /** @type {IEntity}*/defender) => {
-
+    const disp = displacement(defender, attacker);
+    defender.vx = Math.sign(disp[0]) * 0.2;
+    // console.log('knockback', defender.vx);
+    defender.vy = -0.2;
 }
 
-const displacement = (/** @type {ITransform}*/e1, /** @type {ITransform}*/e2) => {
-    const cx1 = e1.x + e1.w / 2;
-    const cy1 = e1.y + e1.h / 2;
-    const cx2 = e2.x + e2.w / 2;
-    const cy2 = e2.y + e2.h / 2;
-    return [(cx1 - cx2), (cy1 - cy2)];
+const displacement = (/** @type {ITransform}*/toEntity, /** @type {ITransform}*/fromEntity) => {
+    const to_cx = toEntity.x + toEntity.w / 2;
+    const to_cy = toEntity.y + toEntity.h / 2;
+    const from_cx = fromEntity.x + fromEntity.w / 2;
+    const from_cy = fromEntity.y + fromEntity.h / 2;
+    return [(to_cx - from_cx), (to_cy - from_cy)];
 }
 
 const distance = (disp) => {
@@ -943,7 +945,7 @@ setInterval(() => {
     // Compute hero position:
     // The hero's bounding rectangle's corners have the following coordinates:
     //
-    //           [hero_x, hero_y]      [hero_x + hero_w, hero_y]
+    //           [hero.x, hero.y]      [hero.x + hero_w, hero.y]
     //                           ______
     //                          |     |  
     //                          |     |  
@@ -951,30 +953,29 @@ setInterval(() => {
     //                          |     |  
     //                          |_____|
     //
-    // [hero_x, hero_y + hero_h]      [hero_x + hero_w, hero_y + hero_h]
+    // [hero.x, hero.y + hero_h]      [hero.x + hero_w, hero.y + hero_h]
 
 
     // Apply gravity to Y acceleration, Y acceleration to Y speed and Y speed to Y position
-    hero_vy += hero_g;
-    hero_vy += hero_ay;
-    if (hero_vy > 0) hero_g = g2;
-    if (hero_vy > 0.2) hero_vy = 0.2;
+    hero.vy += hero_g;
+    if (hero.vy > 0) hero_g = g2;
+    if (hero.vy > 0.2) hero.vy = 0.2;
 
-    hero_y = tryMoveY(
-        { x: hero_x, y: hero_y, w: hero_w, h: hero_h },
-        hero_vy,
+    hero.y = tryMoveY(
+        hero,
+        hero.vy,
         map,
         () => {
-            if (hero_vy > 0) {
-                hero_grounded = frameID + 5;
-                hero_vy = 0;
+            if (hero.vy > 0) {
+                hero.gd = frameID + 5;
+                hero.vy = 0;
                 hero_g = g1;
-                hero_ay = 0;
+                if (hero.gd) hero.vx = 0;
             }
             // If moving up
-            if (hero_vy < 0) {
+            if (hero.vy < 0) {
                 // If this tile is solid, put the hero on the bottom side of it and let it fall
-                hero_vy = 0;
+                hero.vy = 0;
             }
         }
     ).y;
@@ -986,46 +987,29 @@ setInterval(() => {
         input.d = 0;
     } else {
         // If left key is pressed, go left
-        if (input.l) {
-            hero_dir_x = -1;
-            hero_x = tryMoveX(
-                { x: hero_x, y: hero_y, w: hero_w, h: hero_h },
-                -.1,
-                map,
-                () => {
-                    if (can_do_climb) {
-                        hero_vy = -.07;
-                    }
+        hero.fc = input.l ? -1 : 1;
+        tryMoveX(
+            hero,
+            (input.l || input.r ? hero.fc : 0) * .1 + hero.vx,
+            map,
+            () => {
+                if (can_do_climb) {
+                    hero.vy = -.07;
                 }
-            ).x;
-        }
-
-        // If right key is pressed, go right
-        if (input.r) {
-            hero_dir_x = 1;
-            hero_x = tryMoveX(
-                { x: hero_x, y: hero_y, w: hero_w, h: hero_h },
-                .1,
-                map,
-                () => {
-                    if (can_do_climb) {
-                        hero_vy = -.07;
-                    }
-                }
-            ).x;
-        }
+            }
+        );
 
         // If up key is pressed and the hero is grounded, jump
-        if (input.u && hero_vy >= 0 && hero_grounded >= frameID && hero_can_jump) {
-            // console.log('jump', hero_grounded, frameID);
-            hero_vy = -.315;
+        if (input.u && hero.vy >= 0 && hero.gd >= frameID && hero_can_jump) {
+            // console.log('jump', hero.gd, frameID);
+            hero.vy = -.315;
             hero_g = g1;
             hero_can_jump = 0;
         }
         if (!input.u) {
             hero_can_jump = 1;
-            if (hero_vy < 0) {
-                if (hero_vy < -0.15) hero_vy = -0.15;
+            if (hero.vy < 0) {
+                if (hero.vy < -0.15) hero.vy = -0.15;
                 hero_g = g2;
             }
         }
@@ -1058,7 +1042,7 @@ setInterval(() => {
                 const patrolDist = 3;
                 const enemy = e.enemy;
 
-                const disp = displacement(e, { x: hero_x, y: hero_y, w: hero_w, h: hero_h });
+                const disp = displacement(e, hero);
                 const dist = distance(disp);
 
                 enemy.tg = +(dist < 6);
@@ -1069,7 +1053,7 @@ setInterval(() => {
                     [...enemy.b].forEach(behavior => {
                         if (behavior == 'w') {
                             if (enemy.tg) {
-                                enemy.dx = hero_x + Math.sign(disp[0]) * 2;
+                                enemy.dx = hero.x + Math.sign(disp[0]) * 2;
                                 enemy.dy = y;
                             } else {
                                 enemy.dx = x + Math.random() * wanderDist * 2 - wanderDist;
@@ -1078,8 +1062,8 @@ setInterval(() => {
                         }
                         if (behavior == 'f') {
                             if (enemy.tg) {
-                                enemy.dx = hero_x + disp[0] / dist * 2;
-                                enemy.dy = hero_y + disp[1] / dist * 2;
+                                enemy.dx = hero.x + disp[0] / dist * 2;
+                                enemy.dy = hero.y + disp[1] / dist * 2;
                             } else {
                                 enemy.dx = x + Math.random() * wanderDist * 2 - wanderDist;
                                 enemy.dy = y + Math.random() * wanderDist * 2 - wanderDist;
@@ -1088,7 +1072,7 @@ setInterval(() => {
                         if (behavior == 'm') {
                             if (enemy.b.includes('w')) {
                                 if (disp[0] < 3) {
-                                    enemy.dx = hero_x;
+                                    enemy.dx = hero.x;
                                     if (e.gd) {
                                         e.vy = enemy.b.includes('l') ? -.32 : -.18;
                                         e.gd = 0;
@@ -1096,8 +1080,8 @@ setInterval(() => {
                                 }
                             } else {
                                 if (dist < 4) {
-                                    enemy.dx = hero_x;
-                                    enemy.dy = hero_y;
+                                    enemy.dx = hero.x;
+                                    enemy.dy = hero.y;
                                 }
                             }
                         }
@@ -1115,7 +1099,7 @@ setInterval(() => {
                 if (b.includes('w')) {
 
                     e.fc = dx == x ? e.fc : Math.sign(dx - x);
-                    const deltaX = Math.sign(dx - x) * Math.min(Math.abs(dx - x), sp);
+                    const deltaX = Math.sign(dx - x) * Math.min(Math.abs(dx - x), sp) + e.vx;
                     tryMoveX(e, deltaX, map);
                     e.vy += g1;
                     tryMoveY(e, e.vy, map, () => {
@@ -1123,25 +1107,39 @@ setInterval(() => {
                         e.vy = 0;
                     });
                 }
-                if (tg) e.fc = (hero_x > x ? 1 : -1);
+                if (tg) e.fc = (hero.x > x ? 1 : -1);
             }
 
             const hasCollision = (
-                hero_x < x + w &&
-                hero_x + hero_w > x &&
-                hero_y < y + h &&
-                hero_y + hero_h > y);
+                hero.x < x + w &&
+                hero.x + hero.w > x &&
+                hero.y < y + h &&
+                hero.y + hero.h > y);
 
             if (!hasCollision) continue;
 
             if (type == 'D') {
                 changeMap(scene == 'h' ? 'd' : 'h');
             }
-            if (type == '3') {
-                console.log('spike!');
-                takeDamage();
-                entities.splice(index, 1);
-                index--;
+            if (hero_inv < frameID) {
+                if (type == '3') {
+                    console.log('spike!');
+                    takeDamage();
+                    entities.splice(index, 1);
+
+                    knockBack(e, hero);
+                    index--;
+                }
+                if (type == 'E') {
+                    // console.log('enemy!');
+                    const { b, dx, sp, tg } = e.enemy; // behaviors, dest x, speed, targeting player
+                    if (b.includes('m')) {
+                        takeDamage();
+                        knockBack(e, hero);
+                    }
+
+                    index--;
+                }
             }
             if (type == 'T') {
                 const { item } = entities[index];
@@ -1155,8 +1153,8 @@ setInterval(() => {
     // Compute scroll
     const cam_ww = (can_do_torch ? 10.75 : 7);
     const cam_hh = (can_do_torch ? 7.5 : 5);
-    scroll_x = Math.max(0, Math.min(hero_x - cam_ww, map_w - cam_ww - cam_ww - 1));
-    scroll_y = Math.max(0, Math.min(hero_y - cam_hh, map_h - cam_hh - cam_hh));
+    scroll_x = Math.max(0, Math.min(hero.x - cam_ww, map_w - cam_ww - cam_ww - 1));
+    scroll_y = Math.max(0, Math.min(hero.y - cam_hh, map_h - cam_hh - cam_hh));
 
     // Draw map
     c.drawImage(
@@ -1240,14 +1238,16 @@ setInterval(() => {
         }
     });
 
-    // Draw hero
-    c.fillStyle = "orange";
-    c.fillRect((hero_x - scroll_x) * tile_w, (hero_y - scroll_y) * tile_h, hero_w * tile_w, hero_h * tile_h);
+    if (hero_inv < frameID || ~~(frameID / 4) % 2 == 0) {
+        // Draw hero
+        c.fillStyle = "orange";
+        c.fillRect((hero.x - scroll_x) * tile_w, (hero.y - scroll_y) * tile_h, hero.w * tile_w, hero.h * tile_h);
+    }
     if (hero_stabby > frameID) {
         c.fillStyle = "gray";
         c.fillRect(
-            (hero_x - scroll_x + hero_dir_x * (1 - Math.max(0, hero_stabby - frameID) / 15 * 0.7 - 0.1 * (hero_dir_x + 1))) * tile_w,
-            (hero_y + 0.4 - scroll_y) * tile_h,
+            (hero.x - scroll_x + hero.fc * (1 - Math.max(0, hero_stabby - frameID) / 15 * 0.7 - 0.1 * (hero.fc + 1))) * tile_w,
+            (hero.y + 0.4 - scroll_y) * tile_h,
             0.8 * tile_w,
             0.2 * tile_h
         );
