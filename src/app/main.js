@@ -1089,19 +1089,15 @@ setInterval(() => {
                             if (enemy.b.includes('w')) {
                                 if (disp[0] < 3) {
                                     enemy.dx = hero_x;
-                                    enemy.dy = y;
+                                    if (e.gd) {
+                                        e.vy = enemy.b.includes('l') ? -.32 : -.18;
+                                        e.gd = 0;
+                                    }
                                 }
                             } else {
                                 if (dist < 4) {
                                     enemy.dx = hero_x;
                                     enemy.dy = hero_y;
-                                }
-                            }
-                        }
-                        if (behavior == 'l') {
-                            if (enemy.b.includes('w') && enemy.b.includes('m')) {
-                                if (disp[0] < 3) {
-                                    if (e.gd) { e.vy = -.3; e.gd = 0; }
                                 }
                             }
                         }
