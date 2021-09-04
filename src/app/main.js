@@ -987,7 +987,8 @@ setInterval(() => {
         input.d = 0;
     } else {
         // If left key is pressed, go left
-        hero.fc = input.l ? -1 : 1;
+        if (input.l) hero.fc = -1;
+        if (input.r) hero.fc = 1;
         tryMoveX(
             hero,
             (input.l || input.r ? hero.fc : 0) * .1 + hero.vx,
