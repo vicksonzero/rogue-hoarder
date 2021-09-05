@@ -414,7 +414,7 @@ const enemies = [
         hp: 3,
         w: 0.5,
         h: 0.5,
-        sp: 0.08,
+        sp: 0.035,
         b: 'fsp', // behaviors: fly, shooty, patrol
     },
     {// 103
@@ -741,8 +741,8 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
     for (let i = 0; spawnCandidates.length && i < enemyCount; i++) {
         const { x, y } = spawnCandidates[~~(Math.random() * spawnCandidates.length)];
 
-        const enemyDef = enemies[randomFrom([1, 0])];
-        // const enemyDef = enemies[randomFrom([2])];
+        // const enemyDef = enemies[randomFrom([1, 0])];
+        const enemyDef = enemies[randomFrom([0, 0, 1, 1, 2])];
         const { w, h } = enemyDef;
         const sx = x + (1 - w) / 2;
         const sy = y + 1 - h - (enemyDef.b.includes('f') ? 1 : 0);
@@ -844,14 +844,16 @@ const shootMagic = (c, s, attacker, defender) => {
     const disp = defender && displacement(defender, attacker);
     const dist = defender && distance(disp);
 
+    const w = s == 's' ? 0.6 : 0.6;
+    const h = s == 's' ? 0.1 : 0.6;
     entities.push({
-        x: attacker.x + attacker.w / 2 - 0.4,
-        y: attacker.y + attacker.h * 0.45 - 0.4,
+        x: attacker.x + attacker.w / 2 - w / 2,
+        y: attacker.y + attacker.h * 0.45 - h / 2,
         fc: 1,
-        w: 0.8, h: 0.8,
+        w, h,
         type: 'M', // magic
-        vx: defender ? disp[0] / dist * .3 : (attacker.fc * .2),
-        vy: defender ? disp[1] / dist * .3 : 0,
+        vx: defender ? disp[0] / dist * .1 : (attacker.fc * .2),
+        vy: defender ? disp[1] / dist * .1 : 0,
         m: { c, s },
     });
 }
@@ -1163,7 +1165,7 @@ setInterval(() => {
             if (type == 'M') { // magic
                 // TODO: extract the callback for optimization
                 const remove_magic = () => {
-                    spawnEffect(e, '#800', 1);
+                    spawnEffect(e, e.m.c, 1);
                     entities.splice(index, 1);
                     index--;
                 }
@@ -1203,7 +1205,7 @@ setInterval(() => {
                         if (behavior == 'f') {
                             if (enemy.tg) {
                                 enemy.dx = hero.x + disp[0] / dist * 2;
-                                enemy.dy = hero.y + disp[1] / dist * 2;
+                                enemy.dy = hero.y + disp[1] / dist * 2 - 0.5;
                             } else {
                                 enemy.dx = x + Math.random() * wanderDist * 2 - wanderDist;
                                 enemy.dy = y + Math.random() * wanderDist * 2 - wanderDist;
@@ -1227,7 +1229,7 @@ setInterval(() => {
                         }
                         if (behavior == 's') {
                             if (dist < 4) {
-                                shootMagic('#00d', 'm', e, hero);
+                                shootMagic('#007', 's', e, hero);
                             }
                         }
                     });
@@ -1243,6 +1245,7 @@ setInterval(() => {
 
                 const shootyCollisionIndex = entities.findIndex((mm) => (
                     mm.type == 'M' &&
+                    mm.m.s == 'm' &&
                     mm.x < x + w &&
                     mm.x + mm.w > x &&
                     mm.y < y + h &&
@@ -1330,13 +1333,27 @@ setInterval(() => {
                     }
                     knockBack(e, hero);
                 }
+                if (type == 'M' && e.m.s == 's') {
+                    // console.log('sting!');
+
+                    const can_shield =
+                        (hero.fc > 0 && hero.x < x) ||
+                        (hero.fc < 0 && hero.x > x)
+                        ;
+                    if (!hero_is_shielding || !can_shield) {
+                        takeDamage();
+                        knockBack(e, hero);
+                    }
+                    entities.splice(index, 1);
+                    index--;
+                }
                 if (type == 'E') {
                     // console.log('enemy!');
                     const { b, dx, sp, tg } = e.enemy; // behaviors, dest x, speed, targeting player
-                    const can_shield = (
+                    const can_shield =
                         (hero.fc > 0 && hero.x < x) ||
                         (hero.fc < 0 && hero.x > x)
-                    );
+                        ;
                     if (b.includes('m')) {
                         if (hero_is_shielding && can_shield) {
                             knockBack(hero, e);
@@ -1345,8 +1362,6 @@ setInterval(() => {
                             knockBack(e, hero);
                         }
                     }
-
-                    index--;
                 }
             }
             if (type == 'T') {
@@ -1408,8 +1423,8 @@ setInterval(() => {
             fillRectC(c, cx + www, cy + www * fc, ww, ww, e.eff.c, false);
         }
         if (type == 'M') { // magic
-            c.fillStyle = "red";
-            c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
+            c.fillStyle = e.m.c;
+            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
         }
         if (type == 'E') {
             // c.fillStyle = "red";
@@ -1417,6 +1432,7 @@ setInterval(() => {
             const { n, d, hp, sp, b, dx, dy, tg } = e.enemy;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
+            let flap;
             if (e.inv < frameID || ~~(frameID / 4) % 2 == 0) {
                 switch (n) {
                     case 'Rat':
@@ -1436,13 +1452,27 @@ setInterval(() => {
                         // body
                         fillRectC(c, cx, cy + 0.1 * h, w * 0.7, h * 0.7, "navy", false);
                         c.fillStyle = "navy";
-                        const flap = (Math.ceil(frameID / 10) % 2 == 0) ? 1 : 0;
+                        flap = (Math.ceil(frameID / 10) % 2 == 0) ? 1 : 0;
                         // wings
                         c.fillRect((cx - w * 0.7 / 2 - w * 0.7) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
                         c.fillRect((cx + w * 0.7 / 2) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
                         // eyes
                         fillRectC(c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
                         fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
+                        break;
+                    case 'Bee':
+                        // antenna
+                        fillRectC(c, cx + 0.4 * w * fc, cy - 0.1 * h, w * 0.5, h * 0.1, "#222", false);
+                        // sting
+                        fillRectC(c, cx - w / 2 * fc, cy + 0.2, w * 0.5, h * 0.1, "#222", false);
+                        // body
+                        fillRectC(c, cx, cy + 0.3 * h, w, h * 0.7, "#eb3", false);
+                        flap = (Math.ceil(frameID / 4) % 2 == 0) ? 1 : 0;
+                        // eyes
+                        fillRectC(c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.7, "#222", false);
+                        fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.7, "#222", false);
+                        // wings
+                        fillRectC(c, cx, cy - (0.1 + 0.2 * flap) / 2, w * 0.5, h * (0.2 + 0.4 * flap), '#ccc');
                         break;
                 }
             }
