@@ -69,6 +69,10 @@ body {
   flex-direction: column;
   justify-content: center;
   user-select: none;
+  box-sizing: border-box;
+}
+.card.hd {
+  border: 3px black solid;
 }
 .card i {
   font-size: 200%;
@@ -92,7 +96,7 @@ body {
 #h .card {
   width: 30px;
   height: 40px;
-  border: 1px black solid;
+  /* border: 1px black solid; */
   margin-right: 2px;
   font-size: 20px;
 }

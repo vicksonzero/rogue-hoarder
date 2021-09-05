@@ -109,6 +109,7 @@ const map_home = [
    @property {number} rq - card requirements
    @property {number} [t] - card tier
    @property {number} [nw] - 1=new? 0=old -1=removing
+   @property {number} [hd] - active item?
  */
 
 
@@ -288,7 +289,7 @@ const tiers = [
 ];
 const rare = [
     /* 0 = common    */[35, 36],
-    /* 1 = rare      */[30, 32, 33],
+    /* 1 = rare      */[30, 30, 30, 30, 30, 30, 30, 30, 31, 31, 31, 31, 31, 32, 33], // [30, 32, 33],
     /* 2 = epic      */[31, 34, 37, 38],
     /* 3 = legendary */[39, 40],
 ];
@@ -531,6 +532,8 @@ let lost_inventory = [];
 let inventory_size = inventory.length;
 let lostAbilities = [];
 
+let score_day = 0;
+
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
 
@@ -544,6 +547,7 @@ const changeMap = (_new_map) => {
         hero.x = 9;
         hero.y = 5;
     } else {
+        score_day++;
         hero.x = 9;
         hero.y = 5;
     }
@@ -624,17 +628,18 @@ const pauseGame = () => {
 
 const updateInventoryList = () => {
     l.innerHTML = (inventory.slice(0, inventory_size)
-        .map(({ n, i, t, nw }, _i) => `<div class="card c-${t}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
+        .map(({ n, i, t, nw, hd }, _i) => `<div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
         .join('') +
         '<div>←💀</div>' +
         (inventory.length <= inventory_size ? '' : `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${inventory[inventory_size].n}</div><div>→🗑</div>`)
     );
-    h.innerHTML = inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}" data-c=${_i}>${i}</div>`).join('');
+    h.innerHTML = inventory.map(({ i, t, nw, hd }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}  ${hd ? 'hd' : ''}" data-c=${_i}>${i}</div>`).join('');
     h.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}>${i}</div>`).join('');
     lost_inventory = [];
 };
 
 const updateAbilityList = () => {
+    console.log('updateAbilityList');
     const old_tier = hero_tier;
     if (hero_tier == 3 && !inventory.find(card => card.n == 'health')) { // if health is lost
         hero_tier = 2;
@@ -670,20 +675,29 @@ const updateAbilityList = () => {
     can_do_climb = (inventory.some(card => card.n == 'climb'));
 
     // items
-    can_do_sword = (inventory.some(card => card.n == 'sword'));
-    can_do_wand = (inventory.some(card => card.n == 'wand'));
     can_do_shield = (inventory.some(card => card.n == 'shield'));
     can_do_torch = (inventory.some(card => card.n == 'torch'));
 
     update_can_do_vision();
+    update_can_do_weapons();
 };
 
 const update_can_do_vision = () => {
     a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
     a.height = (can_do_torch ? 480 : 320);
 
-    console.log('update_can_do_vision');
     a.style.filter = `grayscale(${can_do_color ? 0 : 1})`;
+}
+
+const update_can_do_weapons = () => {
+    let w, lastWeapons = (inventory.filter(card => ['sword', 'wand'].includes(card.n)) || []);
+    lastWeapons.forEach(card => {
+        card.hd = 0;
+    });
+    w = lastWeapons.pop();
+    can_do_sword = (w && w.n == 'sword');
+    can_do_wand = (w && w.n == 'wand');
+    if (w) w.hd = 1;
 }
 
 const spawnEnemy = (spawnCandidates, enemyCount) => {
@@ -941,7 +955,7 @@ cache_map(a_home_cache, a_home_cache_c, map_home);
 
 changeMap('h');
 
-
+updateAbilityList();
 updateInventoryList();
 
 window['prioritize'] = (i) => {
@@ -1029,14 +1043,8 @@ setInterval(() => {
                 hero_g = g2;
             }
         }
-        if (input.a && frameID >= hero_can_stab) {
-            hero_stabby = frameID + 15;
-            hero_can_stab = frameID + 30;
-        }
-        if (!hero_can_stab && !input.a) {
-            hero_can_stab = frameID;
-        }
-        if (input.a && frameID >= hero_can_stab) {
+        // console.log('can_do_sword', can_do_sword);
+        if (input.a && can_do_sword && frameID >= hero_can_stab) {
             hero_stabby = frameID + 15;
             hero_can_stab = frameID + 30;
         }
@@ -1319,7 +1327,7 @@ setInterval(() => {
         c.font = `32px Arial`;
         c.fillText(scene == 'h' ? `Village` : `Dungeon`, a.width / 2, a.height / 2);
         c.font = `16px Arial`;
-        c.fillText(scene == 'h' ? `Day 1` : `Night 1`, a.width / 2, a.height / 2 + 32);
+        c.fillText(scene == 'h' ? `Day ${score_day}` : `Night ${score_day}`, a.width / 2, a.height / 2 + 32);
         transition_progress -= 16;
 
         if (transition_progress <= 0) {
