@@ -751,7 +751,12 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
 };
 
 const spawnEffect = (/** @type {IEntity} */ tr, c, s, fc = 1) => {
-    entities.push({ ...tr, type: 'F', fc, eff: { c, hp: 30, s } });
+    entities.push({
+        ...tr,
+        type: 'F',
+        fc,
+        eff: { c, hp: 30, s }
+    });
 }
 
 const takeDamage = () => {
@@ -1160,13 +1165,14 @@ setInterval(() => {
                 }
 
                 if (b.includes('f')) flyToDestAtSpeed(e);
+                
                 if (b.includes('w')) {
-
                     e.fc = dx == x ? e.fc : Math.sign(dx - x);
                     const deltaX = Math.sign(dx - x) * Math.min(Math.abs(dx - x), sp) + e.vx;
                     e.vx -= (Math.sign(e.vx) * Math.min(Math.abs(e.vx), .04));
                     tryMoveX(e, deltaX, map);
                     e.vy += g1;
+                    e.gd = 0;
                     tryMoveY(e, e.vy, map, () => {
                         if (e.vy > 0) e.gd = 1;
                         e.vy = 0;
