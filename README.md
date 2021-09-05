@@ -23,7 +23,7 @@ Manage your life priorities vs earnings in this dark adventure game
 - [x] toggle off abilities by taking damage
 - [ ] player can do
   - [x] poking sword
-    - [ ] sword hurting enemies (and cause knockbacks)
+    - [x] sword hurting enemies (and cause knockbacks)
   - [ ] shooting magic
   - [ ] block with shield
   - [ ] block with armor
