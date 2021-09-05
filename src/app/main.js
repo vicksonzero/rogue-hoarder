@@ -1158,18 +1158,26 @@ setInterval(() => {
                     // console.log('stabby!', e.enemy.hp);
                     knockBack(hero, e);
                     if (e.enemy.hp <= 0) {
-                        entities.splice(index, 1);
                         spawnEffect(e, '#b3e', 1, 0);
                         spawnEffect(e, '#888', 1.5);
+                        entities.splice(index, 1);
+                        index--;
+                        continue;
                     }
                 }
 
                 if (b.includes('f')) flyToDestAtSpeed(e);
-                
+
                 if (b.includes('w')) {
+                    // set facing depending on walk direction
                     e.fc = dx == x ? e.fc : Math.sign(dx - x);
+
+                    // calculate x movement needed
                     const deltaX = Math.sign(dx - x) * Math.min(Math.abs(dx - x), sp) + e.vx;
+
+                    // move according to direction and min speed between remaining and allowed speed
                     e.vx -= (Math.sign(e.vx) * Math.min(Math.abs(e.vx), .04));
+
                     tryMoveX(e, deltaX, map);
                     e.vy += g1;
                     e.gd = 0;
@@ -1184,14 +1192,11 @@ setInterval(() => {
                 entities.splice(index, 1);
                 index--;
                 continue;
-
             }
-
-
             if (type == '3' && stabbyHasCollision) {
-                entities.splice(index, 1);
                 spawnEffect(e, '#A02', 3);
                 spawnEffect(e, 'red', 2.2, 0);
+                entities.splice(index, 1);
                 index--;
                 continue;
             }
@@ -1212,9 +1217,9 @@ setInterval(() => {
                 if (type == '3') {
                     // console.log('spike!');
                     takeDamage();
-                    entities.splice(index, 1);
 
                     knockBack(e, hero);
+                    entities.splice(index, 1);
                     index--;
                 }
                 if (type == 'E') {
