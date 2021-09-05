@@ -241,7 +241,7 @@ const cards = [
     },
     {// 34
         n: 'elem armor', // name
-        i: '',
+        i: '🧢',
         rq: 1, // requires live
     },
     {// 35
@@ -289,7 +289,7 @@ const tiers = [
 ];
 const rare = [
     /* 0 = common    */[35, 36],
-    /* 1 = rare      */[30, 30, 30, 30, 30, 30, 30, 30, 31, 31, 31, 31, 31, 32, 33], // [30, 32, 33],
+    /* 1 = rare      */[30, 32, 32, 32, 32, 32, 32, 32, 32, 33], // [30, 32, 33],
     /* 2 = epic      */[31, 34, 37, 38],
     /* 3 = legendary */[39, 40],
 ];
@@ -530,8 +530,9 @@ let frameID = 0;
 let hero = { x: 10, y: 2, w: .6, h: 1, fc: 1, type: 'hero', vx: 0, vy: 0, gd: 1, inv: 0 };
 let hero_g = g1;  // Y acceleration
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
-let hero_stabby = 0;  // hero can stab
+let hero_stabby = 0;  // hero stabbing
 let hero_can_stab = 1;  // hero can stab
+let hero_shielding = 0;  // hero blocking with shield
 let hero_tier = 3; // used to unlock health cards
 
 /** @type {Array<IItem>} */
@@ -1041,7 +1042,7 @@ setInterval(() => {
         hero.fc = mv || hero.fc;
         tryMoveX(
             hero,
-            mv * .1 + hero.vx,
+            mv * ((hero_shielding || !can_do_run) ? .03 : .1) + hero.vx,
             map,
             () => {
                 if (can_do_climb) {
@@ -1065,12 +1066,21 @@ setInterval(() => {
             }
         }
         // console.log('can_do_sword', can_do_sword);
-        if (input.a && can_do_sword && frameID >= hero_can_stab) {
+        if (input.a && can_do_sword && !hero_shielding && frameID >= hero_can_stab) {
             hero_stabby = frameID + 15;
-            hero_can_stab = frameID + 30;
+            hero_can_stab = frameID + 50;
         }
-        if (!hero_can_stab && !input.a) {
-            hero_can_stab = frameID;
+        if (hero_can_stab > frameID + 20 && !input.a) {
+            hero_can_stab = frameID + 20;
+        }
+
+        // If up key is pressed and the hero is grounded, jump
+        if (input.d && can_do_shield && hero_stabby < frameID) {
+            hero_shielding = 1;
+        }
+        // If up key is pressed and the hero is grounded, jump
+        if (!input.d && hero_shielding) {
+            hero_shielding = 0;
         }
 
         // update entity
@@ -1156,10 +1166,11 @@ setInterval(() => {
                     e.enemy.hp -= 1;
                     e.inv = frameID + 40;
                     // console.log('stabby!', e.enemy.hp);
+                    spawnEffect({ ...e, w: w / 2 }, '#b3e', 1, 0);
                     knockBack(hero, e);
                     if (e.enemy.hp <= 0) {
-                        spawnEffect(e, '#b3e', 1, 0);
-                        spawnEffect(e, '#888', 1.5);
+                        spawnEffect(e, '#b3e', 2, 0);
+                        spawnEffect(e, '#888', 2.5);
                         entities.splice(index, 1);
                         index--;
                         continue;
@@ -1216,18 +1227,32 @@ setInterval(() => {
             if (hero.inv < frameID) {
                 if (type == '3') {
                     // console.log('spike!');
-                    takeDamage();
 
+                    const can_shield =
+                        (hero.fc > 0 && hero.x < x) ||
+                        (hero.fc < 0 && hero.x > x)
+                        ;
+                    if (!hero_shielding || !can_shield) {
+                        takeDamage();
+                        entities.splice(index, 1);
+                        index--;
+                    }
                     knockBack(e, hero);
-                    entities.splice(index, 1);
-                    index--;
                 }
                 if (type == 'E') {
                     // console.log('enemy!');
                     const { b, dx, sp, tg } = e.enemy; // behaviors, dest x, speed, targeting player
+                    const can_shield = (
+                        (hero.fc > 0 && hero.x < x) ||
+                        (hero.fc < 0 && hero.x > x)
+                    );
                     if (b.includes('m')) {
-                        takeDamage();
-                        knockBack(e, hero);
+                        if (hero_shielding && can_shield) {
+                            knockBack(hero, e);
+                        } else {
+                            takeDamage();
+                            knockBack(e, hero);
+                        }
                     }
 
                     index--;
@@ -1348,6 +1373,16 @@ setInterval(() => {
         // Draw hero
         c.fillStyle = "orange";
         c.fillRect((hero.x - scroll_x) * tile_w, (hero.y - scroll_y) * tile_h, hero.w * tile_w, hero.h * tile_h);
+    }
+
+    if (hero_shielding) {
+        c.fillStyle = "brown";
+        c.fillRect(
+            (hero.x - scroll_x + (hero.fc + 1) / 2 * hero.w - 0.1) * tile_w,
+            (hero.y - scroll_y + 0.2) * tile_h,
+            0.2 * tile_w,
+            0.6 * tile_h
+        );
     }
     if (hero_stabby > frameID) {
         c.fillStyle = "gray";
