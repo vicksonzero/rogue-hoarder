@@ -89,7 +89,7 @@ const map_home = [
     "11000000000000000000000000000001",
     "11000000000000000000011111100001",
     "11000111000000000000000000000000",
-    "11d000000000wwwww2wwww000000000D",
+    "11d000000003wwwww2wwww000000000D",
     "11111111111111111111111111111111",
 ];
 
@@ -332,6 +332,13 @@ for (let i = 0; i < tiers.length; i++) {
  */
 
 /**
+ * @typedef IEffect
+ * @property {string} c    - color
+ * @property {number} hp   - duration of the effect
+ * @property {number} s    - size of the effect
+ */
+
+/**
  * @typedef ITransform
    @property {number} x          - 
    @property {number} y          - 
@@ -352,6 +359,7 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} [vy]       - velocity y, used for gravity
    @property {ICard} [item]      - 
    @property {IEnemy} [enemy]    - 
+   @property {IEffect} [eff]     - 
  */
 
 /** @type {IEnemyDef[]} */
@@ -741,6 +749,10 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
 
     return result;
 };
+
+const spawnEffect = (/** @type {IEntity} */ tr, c, s, fc = 1) => {
+    entities.push({ ...tr, type: 'F', fc, eff: { c, hp: 30, s } });
+}
 
 const takeDamage = () => {
     // console.log('takeDamage!');
@@ -1142,6 +1154,8 @@ setInterval(() => {
                     knockBack(hero, e);
                     if (e.enemy.hp <= 0) {
                         entities.splice(index, 1);
+                        spawnEffect(e, '#b3e', 1, 0);
+                        spawnEffect(e, '#888', 1.5);
                     }
                 }
 
@@ -1160,10 +1174,18 @@ setInterval(() => {
                 }
                 if (tg) e.fc = (hero.x > x ? 1 : -1);
             }
+            if (type == 'F' && e.eff.hp-- < 0) { // effects
+                entities.splice(index, 1);
+                index--;
+                continue;
+
+            }
 
 
             if (type == '3' && stabbyHasCollision) {
                 entities.splice(index, 1);
+                spawnEffect(e, '#A02', 3);
+                spawnEffect(e, 'red', 2.2, 0);
                 index--;
                 continue;
             }
@@ -1246,6 +1268,18 @@ setInterval(() => {
             c.fillStyle = "red";
             c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
         }
+        if (type == 'F') { // effects
+            const cx = x + w / 2 - scroll_x;
+            const cy = y + h / 2 - scroll_y;
+
+            const ww = w * e.eff.hp / 30;
+            const www = w * e.eff.s * (1 - e.eff.hp / 30);
+
+            fillRectC(c, cx - www, cy - www * fc, ww, ww, e.eff.c, false);
+            fillRectC(c, cx - www * fc, cy + www, ww, ww, e.eff.c, false);
+            fillRectC(c, cx + www * fc, cy - www, ww, ww, e.eff.c, false);
+            fillRectC(c, cx + www, cy + www * fc, ww, ww, e.eff.c, false);
+        }
         if (type == 'E') {
             // c.fillStyle = "red";
             // c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
@@ -1286,7 +1320,7 @@ setInterval(() => {
             c.fillText(`${tg ? '!!' : ''}`, cx * tile_w, (y - 0.2 - scroll_y - 0.3) * tile_h);
             // c.fillText(`d(${dx.toFixed(1)}, ${dy.toFixed(1)})`, cx * tile_w, (y - 0.2 - scroll_y) * tile_h);
         }
-        if (type == 'T') {
+        if (type == 'T') { // treasure
             const { item } = e;
             c.fillStyle = "orange";
             c.strokeStyle = "black 2px solid";
