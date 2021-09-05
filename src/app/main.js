@@ -641,7 +641,7 @@ const updateInventoryList = () => {
 const updateAbilityList = () => {
     console.log('updateAbilityList');
     const old_tier = hero_tier;
-    if (hero_tier == 3 && !inventory.find(card => card.n == 'health')) { // if health is lost
+    if (hero_tier == 3 && inventory.filter(card => card.n == 'health').length <= 0) { // if health is lost
         hero_tier = 2;
     } else if (hero_tier == 2 && inventory.filter(card => card.t == 2).length <= 1) { // if enough tier 2 is lost
         hero_tier = 1;
