@@ -784,8 +784,10 @@ const takeDamage = () => {
     lost_inventory = [lostItem];
     if (lostItem.n == 'armor') {
         inventory.splice(lostIndex, 1, { n: '', i: '', rq: 1 });
+        spawnEffect(hero, '#AAA', 1);
     } else {
         inventory.splice(lostIndex, 1);
+        spawnEffect(hero, 'red', 0.7);
     }
 
     inventory_size = inventory.length;
