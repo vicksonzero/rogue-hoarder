@@ -536,7 +536,7 @@ let hero_shielding = 0;  // hero blocking with shield
 let hero_tier = 3; // used to unlock health cards
 
 /** @type {Array<IItem>} */
-let inventory = [3, 30, 0, 0].map(i => (cards[i]));
+let inventory = [3, 30, 0, 33].map(i => (cards[i]));
 let lost_inventory = [];
 let inventory_size = inventory.length;
 let lostAbilities = [];
@@ -699,13 +699,22 @@ const update_can_do_vision = () => {
 }
 
 const update_can_do_weapons = () => {
-    let w, lastWeapons = (inventory.filter(card => ['sword', 'wand'].includes(card.n)) || []);
+    /** @type {IItem} */
+    let w;
+    let lastWeapons = (inventory.filter(card => ['sword', 'wand'].includes(card.n)) || []);
     lastWeapons.forEach(card => {
         card.hd = 0;
     });
     w = lastWeapons.pop();
     can_do_sword = (w && w.n == 'sword');
     can_do_wand = (w && w.n == 'wand');
+    if (w) w.hd = 1;
+
+    lastWeapons = (inventory.filter(card => ['armor'].includes(card.n)) || []);
+    lastWeapons.forEach(card => {
+        card.hd = 0;
+    });
+    w = lastWeapons.pop();
     if (w) w.hd = 1;
 }
 
@@ -763,11 +772,22 @@ const spawnEffect = (/** @type {IEntity} */ tr, c, s, fc = 1) => {
 const takeDamage = () => {
     // console.log('takeDamage!');
     inventory.forEach(e => e.nw = 0);
-    const lastItem = inventory[inventory.length - 1];
-    if (inventory.findIndex(item => item.n == lastItem.n) < 30) { // is ability
-        lostAbilities.push(lastItem);
+    const lastArmorIndex = inventory.slice().reverse().findIndex(card => card.n == 'armor');
+
+    const lostIndex = (lastArmorIndex > -1 ? inventory.length - lastArmorIndex : inventory.length) - 1;
+    // console.log('lostIndex', lostIndex);
+
+    const lostItem = inventory[lostIndex];
+    if (inventory.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
+        lostAbilities.push(lostItem);
     }
-    lost_inventory = [inventory.pop()];
+    lost_inventory = [lostItem];
+    if (lostItem.n == 'armor') {
+        inventory.splice(lostIndex, 1, { n: '', i: '', rq: 1 });
+    } else {
+        inventory.splice(lostIndex, 1);
+    }
+
     inventory_size = inventory.length;
     hero.inv = frameID + 120; // 3s
     updateAbilityList();
