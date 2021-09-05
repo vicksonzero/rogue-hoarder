@@ -346,6 +346,7 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} h          - 
    @property {number} fc         - facing direction. -1 means left, 1 means right
    @property {number} [gd]       - grounded
+   @property {number} [inv]       - invincible until
    @property {number} [vx]       - velocity x, used for knock back or others
    @property {number} [vy]       - velocity y, used for gravity
    @property {ICard} [item]      - 
@@ -517,9 +518,8 @@ let frameID = 0;
 
 // Hero
 /** @type {IEntity} */
-let hero = { x: 10, y: 2, w: .6, h: 1, fc: 1, type: 'hero', vx: 0, vy: 0, gd: 1 };
+let hero = { x: 10, y: 2, w: .6, h: 1, fc: 1, type: 'hero', vx: 0, vy: 0, gd: 1, inv: 0 };
 let hero_g = g1;  // Y acceleration
-let hero_inv = 0;  // invincible until
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
 let hero_stabby = 0;  // hero can stab
 let hero_can_stab = 1;  // hero can stab
@@ -533,7 +533,6 @@ let lostAbilities = [];
 
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
-let aiTicks = 100;
 
 const changeMap = (_new_map) => {
     scene = _new_map;
@@ -721,6 +720,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
             vx: 0,
             vy: 0,
             gd: 1,
+            inv: 0,
             enemy,
         });
     }
@@ -737,16 +737,17 @@ const takeDamage = () => {
     }
     lost_inventory = [inventory.pop()];
     inventory_size = inventory.length;
-    hero_inv = frameID + 120; // 3s
+    hero.inv = frameID + 120; // 3s
     updateAbilityList();
     updateInventoryList();
 };
 
 const knockBack = (/** @type {IEntity}*/attacker, /** @type {IEntity}*/defender) => {
     const disp = displacement(defender, attacker);
-    defender.vx = Math.sign(disp[0]) * 0.2;
+    defender.vx = Math.sign(disp[0]) * 0.4;
     // console.log('knockback', defender.vx);
     defender.vy = -0.2;
+    defender.gd = 0;
 }
 
 const displacement = (/** @type {ITransform}*/toEntity, /** @type {ITransform}*/fromEntity) => {
@@ -759,6 +760,15 @@ const displacement = (/** @type {ITransform}*/toEntity, /** @type {ITransform}*/
 
 const distance = (disp) => {
     return Math.sqrt(disp[0] * disp[0] + disp[1] * disp[1]);
+}
+
+const getStabbyBox = () => {
+    return [
+        hero.x + hero.fc * (1 - Math.max(0, hero_stabby - frameID) / 15 * 0.7 - 0.1 * (hero.fc + 1)),
+        hero.y + 0.4,
+        0.8,
+        0.2
+    ];
 }
 
 const tryMoveX = (/** @type {{x, y, w, h}}*/ entity, dx, map, solidCallback) => {
@@ -807,7 +817,8 @@ const flyToDestAtSpeed = (/** @type IEntity*/e) => {
     const { x, y } = e;
     const { dx, dy, sp } = e.enemy;
     const deltaX = dx - x;
-    e.x += Math.sign(deltaX) * Math.min(Math.abs(deltaX), sp);
+    e.x += Math.sign(deltaX) * Math.min(Math.abs(deltaX), sp) + e.vx;
+    e.vx -= (Math.sign(e.vx) * Math.min(Math.abs(e.vx), .04));
 
     const deltaY = dy - y;
     e.y += Math.sign(deltaY) * Math.min(Math.abs(deltaY), sp);
@@ -865,7 +876,7 @@ const input = {
 const keyHandler = (e) => {
     const w = e.keyCode, t = e.type;
 
-    console.log("keyHandler", w, t);
+    // console.log("keyHandler", w, t);
 
     // -4 bytes zipped compared to if-statements
     const keyMap = {
@@ -964,6 +975,7 @@ setInterval(() => {
     hero.vy += hero_g;
     if (hero.vy > 0) hero_g = g2;
     if (hero.vy > 0.2) hero.vy = 0.2;
+    hero.vx -= (Math.sign(hero.vx) * Math.min(Math.abs(hero.vx), .04));
 
     hero.y = tryMoveY(
         hero,
@@ -974,7 +986,6 @@ setInterval(() => {
                 hero.gd = frameID + 5;
                 hero.vy = 0;
                 hero_g = g1;
-                if (hero.gd) hero.vx = 0;
             }
             // If moving up
             if (hero.vy < 0) {
@@ -1039,6 +1050,16 @@ setInterval(() => {
             const e = entities[index];
             const { type, x, y, w, h } = e;
 
+            const s = getStabbyBox();
+
+            const stabbyHasCollision = (
+                hero_stabby > frameID &&
+                s[0] < x + w &&
+                s[0] + s[2] > x &&
+                s[1] < y + h &&
+                s[1] + s[3] > y
+            );
+
             // console.log(tickIndex);
             if (type == 'E') {
                 // console.log(`------------------------ ai ${index}`);
@@ -1100,11 +1121,24 @@ setInterval(() => {
             if (type == 'E') {
                 // actual enemy update
                 const { b, dx, sp, tg } = e.enemy; // behaviors, dest x, speed, targeting player
+
+
+                if (stabbyHasCollision && e.inv < frameID) {
+                    e.enemy.hp -= 1;
+                    e.inv = frameID + 40;
+                    // console.log('stabby!', e.enemy.hp);
+                    knockBack(hero, e);
+                    if (e.enemy.hp <= 0) {
+                        entities.splice(index, 1);
+                    }
+                }
+
                 if (b.includes('f')) flyToDestAtSpeed(e);
                 if (b.includes('w')) {
 
                     e.fc = dx == x ? e.fc : Math.sign(dx - x);
                     const deltaX = Math.sign(dx - x) * Math.min(Math.abs(dx - x), sp) + e.vx;
+                    e.vx -= (Math.sign(e.vx) * Math.min(Math.abs(e.vx), .04));
                     tryMoveX(e, deltaX, map);
                     e.vy += g1;
                     tryMoveY(e, e.vy, map, () => {
@@ -1115,20 +1149,28 @@ setInterval(() => {
                 if (tg) e.fc = (hero.x > x ? 1 : -1);
             }
 
-            const hasCollision = (
+
+            if (type == '3' && stabbyHasCollision) {
+                entities.splice(index, 1);
+                index--;
+                continue;
+            }
+
+            const heroHasCollision = (
                 hero.x < x + w &&
                 hero.x + hero.w > x &&
                 hero.y < y + h &&
-                hero.y + hero.h > y);
+                hero.y + hero.h > y
+            );
 
-            if (!hasCollision) continue;
+            if (!heroHasCollision) continue;
 
             if (type == 'D') {
                 changeMap(scene == 'h' ? 'd' : 'h');
             }
-            if (hero_inv < frameID) {
+            if (hero.inv < frameID) {
                 if (type == '3') {
-                    console.log('spike!');
+                    // console.log('spike!');
                     takeDamage();
                     entities.splice(index, 1);
 
@@ -1198,32 +1240,34 @@ setInterval(() => {
             const { n, d, hp, sp, b, dx, dy, tg } = e.enemy;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
-            switch (n) {
-                case 'Rat':
-                    // body
-                    fillRectC(c, cx, cy, w, h, "gray", false);
-                    // head
-                    fillRectC(c, (cx + fc * w / 2), (cy - h * 0.5), w / 4 * 3, h / 2, "gray", false);
-                    // ear
-                    fillRectC(c, (cx + fc * w * 0.3), (cy - h * 0.8), w / 4, h * 0.4, "gray", false);
-                    // tail
-                    fillRectC(c, (cx - fc * w), (cy + h * 0.35), w, h / 4, "brown", false);
-                    break;
-                case 'Bat':
-                    // foot
-                    fillRectC(c, cx - 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
-                    fillRectC(c, cx + 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
-                    // body
-                    fillRectC(c, cx, cy + 0.1 * h, w * 0.7, h * 0.7, "navy", false);
-                    c.fillStyle = "navy";
-                    const flap = (Math.ceil(frameID / 10) % 2 == 0) ? 1 : 0;
-                    // wings
-                    c.fillRect((cx - w * 0.7 / 2 - w * 0.7) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
-                    c.fillRect((cx + w * 0.7 / 2) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
-                    // eyes
-                    fillRectC(c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
-                    fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
-                    break;
+            if (e.inv < frameID || ~~(frameID / 4) % 2 == 0) {
+                switch (n) {
+                    case 'Rat':
+                        // body
+                        fillRectC(c, cx, cy, w, h, "gray", false);
+                        // head
+                        fillRectC(c, (cx + fc * w / 2), (cy - h * 0.5), w / 4 * 3, h / 2, "gray", false);
+                        // ear
+                        fillRectC(c, (cx + fc * w * 0.3), (cy - h * 0.8), w / 4, h * 0.4, "gray", false);
+                        // tail
+                        fillRectC(c, (cx - fc * w), (cy + h * 0.35), w, h / 4, "brown", false);
+                        break;
+                    case 'Bat':
+                        // foot
+                        fillRectC(c, cx - 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
+                        fillRectC(c, cx + 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
+                        // body
+                        fillRectC(c, cx, cy + 0.1 * h, w * 0.7, h * 0.7, "navy", false);
+                        c.fillStyle = "navy";
+                        const flap = (Math.ceil(frameID / 10) % 2 == 0) ? 1 : 0;
+                        // wings
+                        c.fillRect((cx - w * 0.7 / 2 - w * 0.7) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
+                        c.fillRect((cx + w * 0.7 / 2) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
+                        // eyes
+                        fillRectC(c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
+                        fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
+                        break;
+                }
             }
             c.fillStyle = "black";
             c.textAlign = 'center';
@@ -1243,18 +1287,19 @@ setInterval(() => {
         }
     });
 
-    if (hero_inv < frameID || ~~(frameID / 4) % 2 == 0) {
+    if (hero.inv < frameID || ~~(frameID / 4) % 2 == 0) {
         // Draw hero
         c.fillStyle = "orange";
         c.fillRect((hero.x - scroll_x) * tile_w, (hero.y - scroll_y) * tile_h, hero.w * tile_w, hero.h * tile_h);
     }
     if (hero_stabby > frameID) {
         c.fillStyle = "gray";
+        const s = getStabbyBox();
         c.fillRect(
-            (hero.x - scroll_x + hero.fc * (1 - Math.max(0, hero_stabby - frameID) / 15 * 0.7 - 0.1 * (hero.fc + 1))) * tile_w,
-            (hero.y + 0.4 - scroll_y) * tile_h,
-            0.8 * tile_w,
-            0.2 * tile_h
+            (s[0] - scroll_x) * tile_w,
+            (s[1] - scroll_y) * tile_h,
+            s[2] * tile_w,
+            s[3] * tile_h
         );
     }
 
