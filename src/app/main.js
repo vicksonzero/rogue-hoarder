@@ -610,6 +610,7 @@ const pauseGame = () => {
         p.style.display = 'block';
         h.style.display = 'none';
         xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
+        inventory.forEach(e => e.nw = 0);
         updateInventoryList();
     } else {
         if (inventory.length > inventory_size) lost_inventory = [inventory.pop()];
@@ -828,6 +829,7 @@ const addItem = (item) => {
         updateInventoryList();
     }
 };
+
 
 const fillRectC = (/** @type {CanvasRenderingContext2D} */ c, cx, cy, w, h, fill, stroke) => {
     c.beginPath();
