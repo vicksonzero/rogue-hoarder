@@ -339,6 +339,13 @@ for (let i = 0; i < tiers.length; i++) {
  */
 
 /**
+ * @typedef IMagic
+ * @property {string} c    - color
+ * @property {string} s    - style, m=magic, s=bee-sting
+ */
+
+
+/**
  * @typedef ITransform
    @property {number} x          - 
    @property {number} y          - 
@@ -360,6 +367,7 @@ for (let i = 0; i < tiers.length; i++) {
    @property {ICard} [item]      - 
    @property {IEnemy} [enemy]    - 
    @property {IEffect} [eff]     - 
+   @property {IMagic} [m]     - 
  */
 
 /** @type {IEnemyDef[]} */
@@ -530,13 +538,19 @@ let frameID = 0;
 let hero = { x: 10, y: 2, w: .6, h: 1, fc: 1, type: 'hero', vx: 0, vy: 0, gd: 1, inv: 0 };
 let hero_g = g1;  // Y acceleration
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
-let hero_stabby = 0;  // hero stabbing
+
 let hero_can_stab = 1;  // hero can stab
-let hero_shielding = 0;  // hero blocking with shield
+let hero_is_stabbing = 0;  // hero stabbing
+
+let hero_can_shoot = 0;  // hero can shoot magic
+let hero_is_shooting = 0;  // hero is shooting magic
+
+let hero_is_shielding = 0;  // hero blocking with shield
 let hero_tier = 3; // used to unlock health cards
 
 /** @type {Array<IItem>} */
-let inventory = [3, 30, 0, 33].map(i => (cards[i]));
+// let inventory = [3, 30, 0, 33].map(i => (cards[i]));
+let inventory = [3, 31, 0, 33].map(i => (cards[i]));
 let lost_inventory = [];
 let inventory_size = inventory.length;
 let lostAbilities = [];
@@ -728,6 +742,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
         const { x, y } = spawnCandidates[~~(Math.random() * spawnCandidates.length)];
 
         const enemyDef = enemies[randomFrom([1, 0])];
+        // const enemyDef = enemies[randomFrom([2])];
         const { w, h } = enemyDef;
         const sx = x + (1 - w) / 2;
         const sy = y + 1 - h - (enemyDef.b.includes('f') ? 1 : 0);
@@ -778,7 +793,7 @@ const takeDamage = () => {
     // console.log('lostIndex', lostIndex);
 
     const lostItem = inventory[lostIndex];
-    if (inventory.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
+    if (cards.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
         lostAbilities.push(lostItem);
     }
     lost_inventory = [lostItem];
@@ -816,13 +831,29 @@ const distance = (disp) => {
     return Math.sqrt(disp[0] * disp[0] + disp[1] * disp[1]);
 }
 
-const getStabbyBox = () => {
+const getStabbyBox = (hero_is_attacking) => {
     return [
-        hero.x + hero.fc * (1 - Math.max(0, hero_stabby - frameID) / 15 * 0.7 - 0.1 * (hero.fc + 1)),
+        hero.x + hero.fc * (1 - Math.max(0, hero_is_attacking - frameID) / 15 * 0.7 - 0.1 * (hero.fc + 1)),
         hero.y + 0.4,
         0.8,
         0.2
     ];
+}
+
+const shootMagic = (c, s, attacker, defender) => {
+    const disp = defender && displacement(defender, attacker);
+    const dist = defender && distance(disp);
+
+    entities.push({
+        x: attacker.x + attacker.w / 2 - 0.4,
+        y: attacker.y + attacker.h * 0.45 - 0.4,
+        fc: 1,
+        w: 0.8, h: 0.8,
+        type: 'M', // magic
+        vx: defender ? disp[0] / dist * .3 : (attacker.fc * .2),
+        vy: defender ? disp[1] / dist * .3 : 0,
+        m: { c, s },
+    });
 }
 
 const tryMoveX = (/** @type {{x, y, w, h}}*/ entity, dx, map, solidCallback) => {
@@ -1064,7 +1095,7 @@ setInterval(() => {
         hero.fc = mv || hero.fc;
         tryMoveX(
             hero,
-            mv * ((hero_shielding || !can_do_run) ? .03 : .1) + hero.vx,
+            mv * ((hero_is_shielding || !can_do_run) ? .03 : .1) + hero.vx,
             map,
             () => {
                 if (can_do_climb) {
@@ -1087,22 +1118,30 @@ setInterval(() => {
                 hero_g = g2;
             }
         }
-        // console.log('can_do_sword', can_do_sword);
-        if (input.a && can_do_sword && !hero_shielding && frameID >= hero_can_stab) {
-            hero_stabby = frameID + 15;
+        // stabbing
+        if (input.a && can_do_sword && !hero_is_shielding && frameID >= hero_can_stab) {
+            hero_is_stabbing = frameID + 15;
             hero_can_stab = frameID + 50;
         }
         if (hero_can_stab > frameID + 20 && !input.a) {
             hero_can_stab = frameID + 20;
         }
-
-        // If up key is pressed and the hero is grounded, jump
-        if (input.d && can_do_shield && hero_stabby < frameID) {
-            hero_shielding = 1;
+        // shooting
+        if (input.a && can_do_wand && !hero_is_shielding && frameID >= hero_can_shoot) {
+            shootMagic('pink', 'm', hero);
+            hero_is_shooting = frameID + 15;
+            hero_can_shoot = frameID + 50;
         }
-        // If up key is pressed and the hero is grounded, jump
-        if (!input.d && hero_shielding) {
-            hero_shielding = 0;
+        if (hero_can_shoot > frameID + 20 && !input.a) {
+            hero_can_shoot = frameID + 20;
+        }
+
+        // shielding
+        if (input.d && can_do_shield && (hero_is_stabbing < frameID && hero_is_shooting < frameID)) {
+            hero_is_shielding = 1;
+        }
+        if (!input.d && hero_is_shielding) {
+            hero_is_shielding = 0;
         }
 
         // update entity
@@ -1111,17 +1150,31 @@ setInterval(() => {
             const e = entities[index];
             const { type, x, y, w, h } = e;
 
-            const s = getStabbyBox();
+            const s = getStabbyBox(hero_is_stabbing);
 
             const stabbyHasCollision = (
-                hero_stabby > frameID &&
+                hero_is_stabbing > frameID &&
                 s[0] < x + w &&
                 s[0] + s[2] > x &&
                 s[1] < y + h &&
                 s[1] + s[3] > y
             );
 
-            // console.log(tickIndex);
+            if (type == 'M') { // magic
+                // TODO: extract the callback for optimization
+                const remove_magic = () => {
+                    spawnEffect(e, '#800', 1);
+                    entities.splice(index, 1);
+                    index--;
+                }
+                if (x + w + e.vx > map_w) {
+                    remove_magic();
+                } else {
+                    tryMoveX(e, e.vx, map, remove_magic);
+                    tryMoveY(e, e.vy, map, remove_magic);
+                }
+
+            }
             if (type == 'E') {
                 // console.log(`------------------------ ai ${index}`);
                 // AI update
@@ -1172,6 +1225,11 @@ setInterval(() => {
                                 }
                             }
                         }
+                        if (behavior == 's') {
+                            if (dist < 4) {
+                                shootMagic('#00d', 'm', e, hero);
+                            }
+                        }
                     });
 
                     e.enemy.ai = frameID + (e.enemy.tg ?
@@ -1183,13 +1241,24 @@ setInterval(() => {
                 // actual enemy update
                 const { b, dx, sp, tg } = e.enemy; // behaviors, dest x, speed, targeting player
 
+                const shootyCollisionIndex = entities.findIndex((mm) => (
+                    mm.type == 'M' &&
+                    mm.x < x + w &&
+                    mm.x + mm.w > x &&
+                    mm.y < y + h &&
+                    mm.y + mm.h > y
+                ));
 
-                if (stabbyHasCollision && e.inv < frameID) {
+                if ((shootyCollisionIndex > -1 || stabbyHasCollision) && e.inv < frameID) {
                     e.enemy.hp -= 1;
                     e.inv = frameID + 40;
                     // console.log('stabby!', e.enemy.hp);
                     spawnEffect({ ...e, w: w / 2 }, '#b3e', 1, 0);
                     knockBack(hero, e);
+                    if (shootyCollisionIndex > -1) {
+                        entities.splice(shootyCollisionIndex, 1);
+                        if (shootyCollisionIndex < index) index--;
+                    }
                     if (e.enemy.hp <= 0) {
                         spawnEffect(e, '#b3e', 2, 0);
                         spawnEffect(e, '#888', 2.5);
@@ -1254,7 +1323,7 @@ setInterval(() => {
                         (hero.fc > 0 && hero.x < x) ||
                         (hero.fc < 0 && hero.x > x)
                         ;
-                    if (!hero_shielding || !can_shield) {
+                    if (!hero_is_shielding || !can_shield) {
                         takeDamage();
                         entities.splice(index, 1);
                         index--;
@@ -1269,7 +1338,7 @@ setInterval(() => {
                         (hero.fc < 0 && hero.x > x)
                     );
                     if (b.includes('m')) {
-                        if (hero_shielding && can_shield) {
+                        if (hero_is_shielding && can_shield) {
                             knockBack(hero, e);
                         } else {
                             takeDamage();
@@ -1338,6 +1407,10 @@ setInterval(() => {
             fillRectC(c, cx + www * fc, cy - www, ww, ww, e.eff.c, false);
             fillRectC(c, cx + www, cy + www * fc, ww, ww, e.eff.c, false);
         }
+        if (type == 'M') { // magic
+            c.fillStyle = "red";
+            c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
+        }
         if (type == 'E') {
             // c.fillStyle = "red";
             // c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
@@ -1397,7 +1470,7 @@ setInterval(() => {
         c.fillRect((hero.x - scroll_x) * tile_w, (hero.y - scroll_y) * tile_h, hero.w * tile_w, hero.h * tile_h);
     }
 
-    if (hero_shielding) {
+    if (hero_is_shielding) {
         c.fillStyle = "brown";
         c.fillRect(
             (hero.x - scroll_x + (hero.fc + 1) / 2 * hero.w - 0.1) * tile_w,
@@ -1406,9 +1479,19 @@ setInterval(() => {
             0.6 * tile_h
         );
     }
-    if (hero_stabby > frameID) {
+    if (hero_is_shooting > frameID) {
+        c.fillStyle = "brown";
+        const s = getStabbyBox(frameID + 12);
+        c.fillRect(
+            (s[0] - scroll_x) * tile_w,
+            (s[1] - scroll_y) * tile_h,
+            s[2] * tile_w,
+            s[3] * tile_h
+        );
+    }
+    if (hero_is_stabbing > frameID) {
         c.fillStyle = "gray";
-        const s = getStabbyBox();
+        const s = getStabbyBox(hero_is_stabbing);
         c.fillRect(
             (s[0] - scroll_x) * tile_w,
             (s[1] - scroll_y) * tile_h,

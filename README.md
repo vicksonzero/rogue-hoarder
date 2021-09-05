@@ -24,9 +24,9 @@ Manage your life priorities vs earnings in this dark adventure game
 - [ ] player can do
   - [x] poking sword
     - [x] sword hurting enemies (and cause knockbacks)
-  - [ ] shooting magic
+  - [x] shooting magic
   - [x] block with shield
-  - [ ] block with armor
+  - [x] block with armor
   - [ ] cure venom with potion
   - [x] climbing walls
   - [ ] dash
@@ -45,7 +45,7 @@ Manage your life priorities vs earnings in this dark adventure game
   - [x] m = melee (leap 1 block, body cannot touch)
   - [x] l = leap higher when attack
   - [x] f = fly
-  - [ ] s = shooty
+  - [x] s = shooty
 - [x] reorganize items in queue
 - [x] items to get (treasure box, sword and wands)
 - [ ] score system
