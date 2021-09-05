@@ -31,14 +31,15 @@ Manage your life priorities vs earnings in this dark adventure game
   - [x] climbing walls
   - [ ] dash
   - [x] getting items
-  - [ ] see color
-  - [ ] use torch
+  - [x] see color
+  - [x] use torch to see further
   - [ ] hear enemies
   - [ ] speak
   - [ ] love one another
   - [ ] heal from friends and family
 - [x] inventory queue linked to hp
-  - [ ] become invincible when taking damage
+  - [x] become invincible when taking damage
+  - [x] knockbacks
 - [ ] enemies behaviors
   - [x] w = walk
   - [x] m = melee (leap 1 block, body cannot touch)
@@ -50,7 +51,8 @@ Manage your life priorities vs earnings in this dark adventure game
 - [ ] score system
 - [x] discarding health card unlocks more health cards
 - [x] discard multiple health cards to unlock a card
-  - [ ] animations for unlocking health
+  - [x] animations for unlocking cards
+  - [ ] cutscene for discarding self
 - [ ] friends and family and doctor
 - [ ] additional enemy behaviors
   - [ ] a = armor? (allow hp+3)
