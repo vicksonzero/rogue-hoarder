@@ -1306,14 +1306,14 @@ setInterval(() => {
                 continue;
             }
 
-            const heroHasCollision = (
+            const hasCollisionWithHero = (
                 hero.x < x + w &&
                 hero.x + hero.w > x &&
                 hero.y < y + h &&
                 hero.y + hero.h > y
             );
 
-            if (!heroHasCollision) continue;
+            if (!hasCollisionWithHero) continue;
 
             if (type == 'D') {
                 changeMap(scene == 'h' ? 'd' : 'h');
@@ -1344,6 +1344,7 @@ setInterval(() => {
                         takeDamage();
                         knockBack(e, hero);
                     }
+                    spawnEffect(e, e.m.c, 1);
                     entities.splice(index, 1);
                     index--;
                 }
@@ -1423,8 +1424,14 @@ setInterval(() => {
             fillRectC(c, cx + www, cy + www * fc, ww, ww, e.eff.c, false);
         }
         if (type == 'M') { // magic
+            c.save();
+            c.translate((x + w / 2 - scroll_x) * tile_w, (y + h / 2 - scroll_y) * tile_h);
+            if (e.m.s == 's') {
+                c.rotate(Math.atan2(e.vy, e.vx));
+            }
             c.fillStyle = e.m.c;
-            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            c.fillRect(-w / 2 * tile_w, -h / 2 * tile_h, w * tile_w, h * tile_h);
+            c.restore();
         }
         if (type == 'E') {
             // c.fillStyle = "red";
