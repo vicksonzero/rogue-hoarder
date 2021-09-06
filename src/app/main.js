@@ -553,8 +553,7 @@ let hero_is_shielding = 0;  // hero blocking with shield
 let hero_tier = 3; // used to unlock health cards
 
 /** @type {Array<IItem>} */
-// let inventory = [3, 30, 0, 33].map(i => (cards[i]));
-let inventory = [3, 31, 0, 33].map(i => (cards[i]));
+let inventory = [3, 30, 33, 0].map(i => (cards[i]));
 let lost_inventory = [];
 let inventory_size = inventory.length;
 let lostAbilities = [];
@@ -1106,10 +1105,11 @@ setInterval(() => {
     } else {
         // If left key is pressed, go left
         const mv = input.l ? -1 : input.r ? 1 : 0;
+        const not_enough_strength = !can_do_armor && inventory.some(card => card.n == 'armor');
         hero.fc = mv || hero.fc;
         tryMoveX(
             hero,
-            mv * ((hero_is_shielding || !can_do_run) ? .03 : .1) + hero.vx,
+            mv * ((hero_is_shielding || !can_do_run || not_enough_strength) ? .03 : .1) + hero.vx,
             map,
             () => {
                 if (can_do_climb) {
