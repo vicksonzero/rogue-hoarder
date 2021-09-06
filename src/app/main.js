@@ -322,7 +322,7 @@ for (let i = 0; i < tiers.length; i++) {
    @property {number} h                        - height, will be copied to entity
    @property {number} sp                       - moving speed
    @property {string} b                        - behaviors string
-   @property {'' | 'F' | 'W' | 'E'} element    - type of element (F=Fire, W=Water, E=Electric)
+   @property {'' | 'F' | 'W' | 'E'} el         - type of element (F=Fire, W=Water, E=Electric)
    @property {number} sx                       - spawn x
    @property {number} sy                       - spawn y
    @property {number} dx                       - dest x
@@ -742,7 +742,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
     let result = [];
     /** @type {IEnemy} */
     let enemy;
-    let score_difficulty = difficulty_curve[score_day - 1];
+    let score_difficulty = scene == 'h' ? 4 : difficulty_curve[score_day - 1];
 
     for (let i = 0; spawnCandidates.length && score_difficulty > 0; i++) {
         const { x, y } = spawnCandidates[~~(Math.random() * spawnCandidates.length)];
@@ -752,10 +752,15 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
         const { w, h } = enemyDef;
         const sx = x + (1 - w) / 2;
         const sy = y + 1 - h - (enemyDef.b.includes('f') ? 1 : 0);
+        score_difficulty -= enemyDef.d;
+
+        const el = score_difficulty > 40 ? randomFrom(['', '', '', '', '', '', '', '', '', 'F', 'W', 'E']) : '';
+        score_difficulty -= el == '' ? 0 : 3;
+
         enemy = {
             ...enemyDef,
             maxHp: enemyDef.hp,
-            element: '',
+            el,
             sx,
             sy,
             dx: sx,
@@ -777,7 +782,6 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
             enemy,
         });
 
-        score_difficulty -= enemyDef.d;
     }
     console.log('spawnEnemy spawned:', result.length);
     return result;
