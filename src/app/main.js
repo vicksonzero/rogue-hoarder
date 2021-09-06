@@ -101,6 +101,7 @@ const map_home = [
    @property {string} i - icon
    @property {number} rq - card requirements
    @property {number} [t] - card tier
+   @property {number} [c] - card sell cost
  */
 /**
  * @typedef IItem
@@ -190,16 +191,8 @@ const cards = [
         i: '👄',
         rq: 9, // requires hear
     },
-    {// 15
-        n: 'dash', // name
-        i: '🏃‍♂️',
-        rq: 5, // requires run
-    },
-    {// 16
-        n: 'climb', // name
-        i: '🧗‍♂️',
-        rq: 7, // requires jump
-    },
+    { n: '', rq: 0, i: '' }, // 15
+    { n: '', rq: 0, i: '' }, // 16
     {// 17
         n: 'strength', // name
         i: '💪',
@@ -223,61 +216,85 @@ const cards = [
         n: 'sword', // name
         i: '🗡',
         rq: 7, // requires hand
+        c: 100,
     },
     {// 31
         n: 'wand', // name
         i: '✨',
         rq: 7, // requires hand
+        c: 300,
     },
     {// 32
         n: 'shield', // name
         i: '🛡',
         rq: 7, // requires hand
+        c: 60,
     },
     {// 33
         n: 'armor', // name
         i: '👷',
         rq: 1, // requires live
+        c: 200,
     },
     {// 34
         n: 'elem armor', // name
         i: '🧢',
         rq: 1, // requires live
+        c: 400,
     },
     {// 35
         n: 'potion', // name
         i: '💊',
         rq: 7, // requires hand
+        c: 400,
     },
     {// 36
         n: 'flower', // name
         i: '🌹',
         rq: 7, // requires hand
+        c: 5,
     },
     {// 37
         n: 'torch', // name
         i: '🔦',
         rq: 7, // requires hand
+        c: 800,
     },
     {// 38
         n: 'compass', // name
         i: '🧭',
         rq: 7, // requires hand
+        c: 1000,
     },
     {// 39
         n: 'map', // name
         i: '🗺️',
         rq: 7, // requires hand
+        c: 2000,
     },
     {// 40
         n: 'glasses', // name
         i: '👓',
         rq: 13, // requires colors
+        c: 2000,
     },
     {// 41
         n: 'treasure', // name
         i: '🎁',
         rq: 0, // requires none
+        c: 100,
+    },
+    {// 42
+        n: 'dash', // name
+        i: '🏃‍♂️',
+        rq: 5, // requires run
+        c: 100,
+    },
+    {// 43
+        n: 'climb', // name
+        i: '🧗‍♂️',
+        rq: 7, // requires jump
+        c: 100,
     },
 ];
 
@@ -289,9 +306,10 @@ const tiers = [
 ];
 const rare = [
     /* 0 = common    */[35, 36],
-    /* 1 = rare      */[30, 32, 32, 32, 32, 32, 32, 32, 32, 33], // [30, 32, 33],
-    /* 2 = epic      */[31, 34, 37, 38],
+    /* 1 = rare      */[30, 30, 30, 32, 32, 32, 33, 31], // [30, 32, 33],
+    /* 2 = epic      */[31, 34, 37, 38, 42, 43],
     /* 3 = legendary */[39, 40],
+    /* 4 = treasure  */[41],
 ];
 
 
@@ -525,8 +543,7 @@ let can_do_torch = false; // 720x480 vs 480x320 screen
 
 
 let scene = 'h'; // h=home, d=dungeon
-let transition_progress = 1000; // ms, count till 0
-let transition_to = 'h'; // see `scene`
+let screen_transition_progress = 1000; // ms, count till 0
 let paused = false;
 
 let map = (scene == 'h' ? map_home : map_dungeon);
@@ -621,12 +638,13 @@ const changeMap = (_new_map) => {
 
     for (let i = 0; spawnCandidates.length && i < treasureCount; i++) {
         const { x, y } = spawnCandidates.splice(~~(Math.random() * spawnCandidates.length), 1)[0];
-        const rarity = randomFrom([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2]);
+        const rarity = randomFrom([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 4, 4, 4]);
         const item = cards[randomFrom(rare[rarity])];
+        if (item.n == 'treasure') item.c = ~~(Math.pow(score_day, 1.5) * 100);
         entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1, vy: .1, item });
     }
 
-    transition_progress = 2000;
+    screen_transition_progress = 2000;
 
 };
 
@@ -635,7 +653,7 @@ const pauseGame = () => {
 
     if (paused) {
         // console.log('pauseGame');
-        transition_progress = -1000;
+        screen_transition_progress = -1000;
 
         p.style.display = 'block';
         h.style.display = 'none';
@@ -644,7 +662,7 @@ const pauseGame = () => {
         updateInventoryList();
     } else {
         if (inventory.length > inventory_size) lost_inventory = [inventory.pop()];
-        transition_progress = 0;
+        screen_transition_progress = 0;
 
         updateAbilityList();
         updateInventoryList();
@@ -655,10 +673,11 @@ const pauseGame = () => {
 
 const updateInventoryList = () => {
     l.innerHTML = (inventory.slice(0, inventory_size)
-        .map(({ n, i, t, nw, hd }, _i) => `<div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
+        .map(({ n, i, t, nw, hd }, _i) => `<div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${tryQuestionMark(n)}</div>`)
         .join('') +
         '<div>←💀</div>' +
-        (inventory.length <= inventory_size ? '' : `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${inventory[inventory_size].n}</div><div>→🗑</div>`)
+        (inventory.length <= inventory_size ? '' :
+            `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${tryQuestionMark(inventory[inventory_size].n)}</div><div>→🗑</div>`)
     );
     h.innerHTML = inventory.map(({ i, t, nw, hd }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}  ${hd ? 'hd' : ''}" data-c=${_i}>${i}</div>`).join('');
     h.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}>${i}</div>`).join('');
@@ -939,6 +958,7 @@ const addItem = (item) => {
     }
 };
 
+const tryQuestionMark = (str) => (can_do_speech ? str : Array(str.length).fill('?').join(''));
 
 const fillRectC = (/** @type {CanvasRenderingContext2D} */ c, cx, cy, w, h, fill, stroke) => {
     c.beginPath();
@@ -1026,7 +1046,7 @@ window.addEventListener('keyup', keyHandler);
 window['test'] = {
     get entities() { return entities },
     get cards() { return cards },
-    get transition_progress() { return transition_progress },
+    get transition_progress() { return screen_transition_progress },
     get lostAbilities() { return lostAbilities },
     get inventory() { return inventory },
 
@@ -1063,11 +1083,11 @@ setInterval(() => {
     // The hero's bounding rectangle's corners have the following coordinates:
     //
     //           [hero.x, hero.y]      [hero.x + hero_w, hero.y]
-    //                           ______
-    //                          |     |  
-    //                          |     |  
-    //                          |     |  
-    //                          |     |  
+    //                           _____
+    //                          |     |
+    //                          |     |
+    //                          |     |
+    //                          |     |
     //                          |_____|
     //
     // [hero.x, hero.y + hero_h]      [hero.x + hero_w, hero.y + hero_h]
@@ -1097,7 +1117,7 @@ setInterval(() => {
         }
     ).y;
 
-    if (transition_progress != 0) {
+    if (screen_transition_progress != 0) {
         input.l = 0;
         input.r = 0;
         input.u = 0;
@@ -1502,6 +1522,7 @@ setInterval(() => {
         }
         if (type == 'T') { // treasure
             const { item } = e;
+            const label = item.n == 'treasure' ? `${item.c}z?` : item.n;
             c.fillStyle = "orange";
             c.strokeStyle = "black 2px solid";
             c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h - 1);
@@ -1509,7 +1530,7 @@ setInterval(() => {
             c.strokeRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h / 3 * tile_h);
             c.fillStyle = "black";
             c.textAlign = "center";
-            c.fillText(item.n, (x + w / 2 - scroll_x) * tile_w, (y - 0.2 - scroll_y) * tile_h);
+            c.fillText(tryQuestionMark(label), (x + w / 2 - scroll_x) * tile_w, (y - 0.2 - scroll_y) * tile_h);
         }
     });
 
@@ -1550,15 +1571,15 @@ setInterval(() => {
     }
 
     if (paused) {
-        if (transition_progress < -300) {
-            transition_progress += 16 / 2;
+        if (screen_transition_progress < -300) {
+            screen_transition_progress += 16 / 2;
         }
 
-        c.fillStyle = `rgba(0,0,0,${(1 + transition_progress / 1000).toFixed(1)})`;
+        c.fillStyle = `rgba(0,0,0,${(1 + screen_transition_progress / 1000).toFixed(1)})`;
         c.fillRect(0, 0, a.width, a.height);
 
-    } else if (transition_progress > 0) {
-        c.fillStyle = `rgba(0,0,0,${(transition_progress / 1000).toFixed(1)})`;
+    } else if (screen_transition_progress > 0) {
+        c.fillStyle = `rgba(0,0,0,${(screen_transition_progress / 1000).toFixed(1)})`;
         c.fillRect(0, 0, a.width, a.height);
         c.fillStyle = 'white';
         c.textAlign = 'center';
@@ -1566,10 +1587,10 @@ setInterval(() => {
         c.fillText(scene == 'h' ? `Village` : `Dungeon`, a.width / 2, a.height / 2);
         c.font = `16px Arial`;
         c.fillText(scene == 'h' ? `Day ${score_day}` : `Night ${score_day}`, a.width / 2, a.height / 2 + 32);
-        transition_progress -= 16;
+        screen_transition_progress -= 16;
 
-        if (transition_progress <= 0) {
-            transition_progress = 0;
+        if (screen_transition_progress <= 0) {
+            screen_transition_progress = 0;
         }
     }
 
