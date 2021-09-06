@@ -424,7 +424,7 @@ const enemies = [
         w: 0.6,
         h: 0.9,
         sp: 0.05,
-        b: 'wmla', // behaviors: walk, melee, armor?
+        b: 'wmla', // behaviors: walk, melee, leap, armor?
     },
     {// 104
         n: 'Spider',
