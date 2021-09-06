@@ -19,20 +19,22 @@ Manage your life priorities vs earnings in this dark adventure game
 - [x] procedural enemies by level
 - [x] procedural traps by level
 - [x] procedural loots on fixed map layout
-- [ ] level generation and progression
 - [x] toggle off abilities by taking damage
+- [ ] level generation and progression
+- [ ] score system
+- [ ] friends and family and doctor
 - [ ] player can do
   - [x] poking sword
     - [x] sword hurting enemies (and cause knockbacks)
   - [x] shooting magic
   - [x] block with shield
   - [x] block with armor
-  - [ ] cure venom with potion
   - [x] climbing walls
-  - [ ] dash
   - [x] getting items
   - [x] see color
   - [x] use torch to see further
+  - [ ] cure venom with potion
+  - [ ] dash
   - [ ] hear enemies
   - [ ] speak
   - [ ] love one another
@@ -40,7 +42,7 @@ Manage your life priorities vs earnings in this dark adventure game
 - [x] inventory queue linked to hp
   - [x] become invincible when taking damage
   - [x] knockbacks
-- [ ] enemies behaviors
+- [x] enemies behaviors
   - [x] w = walk
   - [x] m = melee (leap 1 block, body cannot touch)
   - [x] l = leap higher when attack
@@ -48,12 +50,10 @@ Manage your life priorities vs earnings in this dark adventure game
   - [x] s = shooty
 - [x] reorganize items in queue
 - [x] items to get (treasure box, sword and wands)
-- [ ] score system
 - [x] discarding health card unlocks more health cards
 - [x] discard multiple health cards to unlock a card
   - [x] animations for unlocking cards
-  - [ ] cutscene for discarding self
-- [ ] friends and family and doctor
+  - [ ] cutscene for discarding life cards
 - [ ] additional enemy behaviors
   - [ ] a = armor? (allow hp+3)
   - [ ] e = element! (diff+3, take 0 or take 2 instead of take 1 damage)
