@@ -3,6 +3,29 @@
 // Canvas
 const a = document.querySelector("canvas");
 
+const pauseGame = () => {
+    paused = !paused;
+
+    if (paused) {
+        // console.log('pauseGame');
+        screen_transition_progress = -1000;
+
+        p.style.display = 'block';
+        h.style.display = 'none';
+        xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
+        inventory.forEach(e => e.nw = 0);
+        updateInventoryList();
+    } else {
+        if (inventory.length > inventory_size) lost_inventory = [inventory.pop()];
+        screen_transition_progress = 0;
+
+        updateAbilityList();
+        updateInventoryList();
+        p.style.display = 'none';
+        h.style.display = 'flex';
+    }
+};
+
 /** @type HTMLDivElement */
 const h = document.querySelector("#h");
 
@@ -15,6 +38,7 @@ const p = document.querySelector("#p");
 p.style.display = 'none';
 const c = a.getContext("2d");
 c.imageSmoothingEnabled = false;
+h.onclick=pauseGame;
 
 // cache
 const a_dungeon_cache = document.createElement("canvas");
@@ -89,7 +113,7 @@ const map_home = [
     "11000000000000000000000000000001",
     "11000000000000000000011111100001",
     "11000111000000000000000000000000",
-    "11d000000003wwwww2wwww000000000D",
+    "11d000000003wwwwwwwwww000000000D",
     "11111111111111111111111111111111",
 ];
 
@@ -596,6 +620,7 @@ const changeMap = (_new_map) => {
         hero.y = 5;
     }
 
+    const treasureCandidates = [];
     const doorCandidates = [];
     const spikeCandidates = [];
     const spawnCandidates = [];
@@ -611,6 +636,9 @@ const changeMap = (_new_map) => {
             }
             if (tile == '2') {
                 spawnCandidates.push({ x, y });
+            }
+            if (tile == 'T') {
+                treasureCandidates.push({ x, y });
             }
         }
     }
@@ -645,30 +673,6 @@ const changeMap = (_new_map) => {
     }
 
     screen_transition_progress = 2000;
-
-};
-
-const pauseGame = () => {
-    paused = !paused;
-
-    if (paused) {
-        // console.log('pauseGame');
-        screen_transition_progress = -1000;
-
-        p.style.display = 'block';
-        h.style.display = 'none';
-        xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
-        inventory.forEach(e => e.nw = 0);
-        updateInventoryList();
-    } else {
-        if (inventory.length > inventory_size) lost_inventory = [inventory.pop()];
-        screen_transition_progress = 0;
-
-        updateAbilityList();
-        updateInventoryList();
-        p.style.display = 'none';
-        h.style.display = 'flex';
-    }
 };
 
 const updateInventoryList = () => {
@@ -888,7 +892,7 @@ const shootMagic = (c, s, attacker, defender) => {
     });
 }
 
-const tryMoveX = (/** @type {{x, y, w, h}}*/ entity, dx, map, solidCallback) => {
+const tryMoveX = (/** @type {ITransform}*/ entity, dx, map, solidCallback) => {
     entity.x += dx;
     if (dx <= 0) {
         entity.x = Math.max(entity.x, 0);
@@ -909,7 +913,7 @@ const tryMoveX = (/** @type {{x, y, w, h}}*/ entity, dx, map, solidCallback) => 
     return entity;
 };
 
-const tryMoveY = (/** @type {{x, y, w, h}}*/ entity, dy, map, solidCallback) => {
+const tryMoveY = (/** @type {ITransform}*/ entity, dy, map, solidCallback) => {
     entity.y += dy;
     if (dy <= 0) {
         entity.y = Math.max(entity.y, 0);
@@ -958,6 +962,12 @@ const addItem = (item) => {
     }
 };
 
+const trade = (index) => {
+    const item = inventory[index];
+    console.log('trade', item);
+
+}
+
 const tryQuestionMark = (str) => (can_do_speech ? str : Array(str.length).fill('?').join(''));
 
 const fillRectC = (/** @type {CanvasRenderingContext2D} */ c, cx, cy, w, h, fill, stroke) => {
@@ -998,7 +1008,7 @@ const input = {
 const keyHandler = (e) => {
     const w = e.keyCode, t = e.type;
 
-    // console.log("keyHandler", w, t);
+    console.log("keyHandler", w, t);
 
     // -4 bytes zipped compared to if-statements
     const keyMap = {
@@ -1018,6 +1028,11 @@ const keyHandler = (e) => {
         32: 's', /* space */
         8: 'b', /* backspace */
     };
+
+    if (t[3] < 'u' && w >= 49 && w <= 57) {
+        trade(w - 49);
+        return;
+    }
 
     if (!keyMap[w]) return;
 
