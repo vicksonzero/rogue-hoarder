@@ -79,16 +79,16 @@ body {
   font-style: normal;
 }
 .c-0 {
-  background: rgb(236, 81, 81);
+  background: #e55;
 }
 .c-1 {
-  background: rgb(240, 241, 131);
+  background: #ff8;
 }
 .c-2 {
-  background: rgb(140, 233, 140);
+  background: #8e8;
 }
 .c-3 {
-  background: rgb(151, 250, 255);
+  background: #9ff;
 }
 .c-i1 {
   background: #fff;
@@ -102,11 +102,11 @@ body {
 }
 
 .card.out {
-  animation: slideIn 1s ease-out forwards reverse;
+  animation: slideIn 1s ease-out both reverse;
 }
 
 .card.in {
-  animation: slideIn 1s ease-out forwards;
+  animation: slideIn 1s ease-out both;
 }
 
 @keyframes slideIn {

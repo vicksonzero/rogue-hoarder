@@ -392,7 +392,7 @@ const enemies = [
 
     {// 100
         n: 'Rat',
-        d: 1, // difficulty rating
+        d: 2, // difficulty rating
         hp: 2,
         w: 0.6,
         h: 0.5,
@@ -482,7 +482,11 @@ const enemies = [
     },
 ];
 
-// console.log(cards, tiers, rare, enemies);
+const difficulty_curve = [
+    15, 18, 20, 25, 28, 30, 34, 38, 40, 45,
+    50, 55, 61, 62, 65, 70, 77, 84, 90, 98,
+    110, 120, 130, 145, 155, 168, 180, 199, 220, 240,
+];
 
 
 // World
@@ -556,6 +560,7 @@ let inventory_size = inventory.length;
 let lostAbilities = [];
 
 let score_day = 0;
+let score_money = 0;
 
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
@@ -737,8 +742,9 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
     let result = [];
     /** @type {IEnemy} */
     let enemy;
+    let score_difficulty = difficulty_curve[score_day - 1];
 
-    for (let i = 0; spawnCandidates.length && i < enemyCount; i++) {
+    for (let i = 0; spawnCandidates.length && score_difficulty > 0; i++) {
         const { x, y } = spawnCandidates[~~(Math.random() * spawnCandidates.length)];
 
         // const enemyDef = enemies[randomFrom([1, 0])];
@@ -770,8 +776,10 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
             inv: 0,
             enemy,
         });
-    }
 
+        score_difficulty -= enemyDef.d;
+    }
+    console.log('spawnEnemy spawned:', result.length);
     return result;
 };
 
