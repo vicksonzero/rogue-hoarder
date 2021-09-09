@@ -743,6 +743,7 @@ const updateAbilityList = () => {
 
     const old_can_do_color = can_do_color;
     const old_can_do_torch = can_do_torch;
+    const old_can_do_sight = can_do_sight;
 
     can_do_run = (hero_tier >= 2 || inventory.some(card => card.n == 'run'));
     can_do_jump = (hero_tier >= 2 || inventory.some(card => card.n == 'jump'));
@@ -766,7 +767,9 @@ const updateAbilityList = () => {
     can_do_shield = (inventory.some(card => card.n == 'shield'));
     can_do_torch = (inventory.some(card => card.n == 'torch'));
 
-    if (old_can_do_color != can_do_color || old_can_do_torch != can_do_torch) update_can_do_vision();
+    if (old_can_do_color != can_do_color ||
+        old_can_do_torch != can_do_torch ||
+        old_can_do_sight != can_do_sight) update_can_do_vision();
     update_can_do_weapons();
 };
 
@@ -774,7 +777,7 @@ const update_can_do_vision = () => {
     a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
     a.height = (can_do_torch ? 480 : 320);
 
-    a.style.filter = `grayscale(${can_do_color ? 0 : 1})`;
+    a.style.filter = `grayscale(${can_do_color ? 0 : 1}) brightness(${can_do_sight ? 1 : 0.16})`;
 }
 
 const update_can_do_weapons = () => {
@@ -1024,10 +1027,9 @@ const cache_map = (cache, cache_c, _map) => {
             cache_c.fillStyle = "#831";
             cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
 
-            if (y > 1 && _map[y - 1][x] !='1') {
-                cache_c.fillStyle = "green";
+            if (y > 1 && _map[y - 1][x] != '1') {
+                cache_c.fillStyle = "#161";
                 cache_c.fillRect(x * tile_w, y * tile_h, tile_w, 8);
-
             }
         }
         if (tile == 'w' || (tile != 'w' && row[x - 1] == 'w' && row[x + 1] == 'w')) {
@@ -1209,7 +1211,7 @@ setInterval(() => {
         hero.fc = mv || hero.fc;
         tryMoveX(
             hero,
-            mv * ((hero_is_shielding || !can_do_run || not_enough_strength) ? .03 : .1) + hero.vx,
+            mv * ((hero_is_shielding || !can_do_run || not_enough_strength) ? .05 : .1) + hero.vx,
             map,
             () => {
                 if (can_do_climb) {
@@ -1221,7 +1223,7 @@ setInterval(() => {
         // If up key is pressed and the hero is grounded, jump
         if (input.u && hero.vy >= 0 && hero.gd >= frameID && hero_can_jump) {
             // console.log('jump', hero.gd, frameID);
-            hero.vy = can_do_jump ? -.315 : -.2;
+            hero.vy = can_do_jump ? -.315 : -.25;
             hero_g = g1;
             hero_can_jump = 0;
         }
@@ -1527,7 +1529,7 @@ setInterval(() => {
             c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
         }
         if (type == 't') {
-            c.fillStyle = "white";
+            c.fillStyle = "#ffe";
             c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
         }
         if (type == '3') {
