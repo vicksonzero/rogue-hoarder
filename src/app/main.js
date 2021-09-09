@@ -1,7 +1,5 @@
 //@ts-check
 
-// Canvas
-const a = document.querySelector("canvas");
 
 const pauseGame = () => {
     paused = !paused;
@@ -10,10 +8,10 @@ const pauseGame = () => {
         // console.log('pauseGame');
         screen_transition_progress = -1000;
         console.log('trade_type', trade_type);
-        p.style.display = trade_type == '_' ? 'block' : 'none';
-        t.style.display = trade_type == '_' ? 'none' : 'block';
-        h.style.display = 'none';
-        xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
+        $p.style.display = trade_type == '_' ? 'block' : 'none';
+        $t.style.display = trade_type == '_' ? 'none' : 'block';
+        $h.style.display = 'none';
+        $xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
         inventory.forEach(e => e.nw = 0);
         updateInventoryList();
     } else {
@@ -22,33 +20,37 @@ const pauseGame = () => {
 
         updateAbilityList();
         updateInventoryList();
-        p.style.display = 'none';
-        t.style.display = 'none';
+        $p.style.display = 'none';
+        $t.style.display = 'none';
 
-        h.style.display = 'flex';
+        $h.style.display = 'flex';
     }
 };
 
+// Canvas
+const $a = document.querySelector("canvas");
 /** @type HTMLDivElement */
-const h = document.querySelector("#h");
+const $h = document.querySelector("#h");
 /** @type HTMLDivElement */
-const m = document.querySelector("#m");
+const $m = document.querySelector("#m");
 
 /** @type HTMLDivElement */
-const xn = document.querySelector("#excess-note");
+const $xn = document.querySelector("#excess-note");
 /** @type HTMLDivElement */
-const t = document.querySelector("#t");
+const $t = document.querySelector("#t");
 /** @type HTMLDivElement */
-const tList = document.querySelector("#tList");
+const $tList = document.querySelector("#tList");
 /** @type HTMLDivElement */
-const l = document.querySelector("#list");
+const $l = document.querySelector("#list");
 /** @type HTMLDivElement */
-const p = document.querySelector("#p");
-const c = a.getContext("2d");
-p.style.display = 'none';
-t.style.display = 'none';
-c.imageSmoothingEnabled = false;
-h.onclick = pauseGame;
+const $p = document.querySelector("#p");
+/** @type HTMLDivElement */
+const $end = document.querySelector("#end");
+const $c = $a.getContext("2d");
+$p.style.display = 'none';
+$t.style.display = 'none';
+$c.imageSmoothingEnabled = false;
+$h.onclick = pauseGame;
 
 // cache
 const a_dungeon_cache = document.createElement("canvas");
@@ -133,7 +135,7 @@ const map_home = [
  * @typedef ICard
  * @property {string} n - name
  * @property {string} i - icon
- * @property {number} rq - card requirements
+ * @property {number} [rq] - card requirements
  * @property {number} [t] - card tier
  * @property {number} [c] - card sell cost
  */
@@ -141,7 +143,7 @@ const map_home = [
  * @typedef IItem
  * @property {string} n - name
  * @property {string} i - icon
- * @property {number} rq - card requirements
+ * @property {number} [rq] - card requirements
  * @property {number} [t] - card tier
  * @property {number} [nw] - 1=new? 0=old -1=removing
  * @property {number} [hd] - active item?
@@ -154,181 +156,181 @@ const cards = [
     {// 0
         n: '', // name
         i: '',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 1
         n: 'live', // name
         i: '🤍',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 2
         n: 'love', // name
         i: '❤',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 3
         n: 'health', // name
         i: '👍',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 4
         n: 'mind', // name
         i: '💭',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 5
         n: 'run', // name
         i: '🦶',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 6
         n: 'jump', // name
         i: '🐇',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 7
         n: 'hands', // name
         i: '🖐',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 8
         n: 'sight', // name
         i: '👀',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 9
         n: 'hear', // name
         i: '👂',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 10
         n: 'family', // name
         i: '🏠',
-        rq: 2, // requires love
+        // rq: 2, // requires love
     },
     {// 11
         n: 'friends', // name
         i: '👨🏻‍🤝‍👨🏻',
-        rq: 2, // requires love
+        // rq: 2, // requires love
     },
     {// 12
         n: 'kidney', // name
         i: '📱',
-        rq: 1, // requires live
+        // rq: 1, // requires live
     },
     {// 13
         n: 'color', // name
         i: '🎨',
-        rq: 8, // requires sight
+        // rq: 8, // requires sight
     },
     {// 14
         n: 'speech', // name
         i: '👄',
-        rq: 9, // requires hear
+        // rq: 9, // requires hear
     },
     { n: '', rq: 0, i: '' }, // 15
     { n: '', rq: 0, i: '' }, // 16
     {// 17
         n: 'strength', // name
         i: '💪',
-        rq: 7, // requires jump
+        // rq: 7, // requires jump
     },
-    { n: '', rq: 0, i: '' }, // 18
-    { n: '', rq: 0, i: '' }, // 19
-    { n: '', rq: 0, i: '' }, // 20
-    { n: '', rq: 0, i: '' }, // 21
-    { n: '', rq: 0, i: '' }, // 22
-    { n: '', rq: 0, i: '' }, // 23
-    { n: '', rq: 0, i: '' }, // 24
-    { n: '', rq: 0, i: '' }, // 25
-    { n: '', rq: 0, i: '' }, // 26
-    { n: '', rq: 0, i: '' }, // 27
-    { n: '', rq: 0, i: '' }, // 28
-    { n: '', rq: 0, i: '' }, // 29
+    { n: '', /* rq: 0, */ i: '' }, // 18
+    { n: '', /* rq: 0, */ i: '' }, // 19
+    { n: '', /* rq: 0, */ i: '' }, // 20
+    { n: '', /* rq: 0, */ i: '' }, // 21
+    { n: '', /* rq: 0, */ i: '' }, // 22
+    { n: '', /* rq: 0, */ i: '' }, // 23
+    { n: '', /* rq: 0, */ i: '' }, // 24
+    { n: '', /* rq: 0, */ i: '' }, // 25
+    { n: '', /* rq: 0, */ i: '' }, // 26
+    { n: '', /* rq: 0, */ i: '' }, // 27
+    { n: '', /* rq: 0, */ i: '' }, // 28
+    { n: '', /* rq: 0, */ i: '' }, // 29
 
     // items (30+)
     {// 30
         n: 'sword', // name
         i: '🗡',
-        rq: 7, // requires hand
+        // rq: 7, // requires hand
         c: 100,
     },
     {// 31
         n: 'wand', // name
         i: '✨',
-        rq: 7, // requires hand
+        // rq: 7, // requires hand
         c: 300,
     },
     {// 32
         n: 'shield', // name
         i: '🛡',
-        rq: 7, // requires hand
+        // rq: 7, // requires hand
         c: 60,
     },
     {// 33
         n: 'armor', // name
         i: '👷',
-        rq: 1, // requires live
+        // rq: 1, // requires live
         c: 200,
     },
     {// 34
         n: 'elem armor', // name
         i: '🧢',
-        rq: 1, // requires live
+        // rq: 1, // requires live
         c: 400,
     },
     {// 35
         n: 'potion', // name
         i: '💊',
-        rq: 7, // requires hand
+        // rq: 7, // requires hand
         c: 400,
     },
     {// 36
         n: 'flower', // name
         i: '🌹',
-        rq: 7, // requires hand
+        // rq: 7, // requires hand
         c: 5,
     },
     {// 37
         n: 'torch', // name
         i: '🔦',
-        rq: 7, // requires hand
+        // rq: 7, // requires hand
         c: 800,
     },
     {// 38
         n: 'compass', // name
         i: '🧭',
-        rq: 7, // requires hand
+        // rq: 7, // requires hand
         c: 1000,
     },
     {// 39
         n: 'map', // name
         i: '🗺️',
-        rq: 7, // requires hand
+        // rq: 7, // requires hand
         c: 2000,
     },
     {// 40
         n: 'glasses', // name
         i: '👓',
-        rq: 13, // requires colors
+        // rq: 13, // requires colors
         c: 2000,
     },
     {// 41
         n: 'treasure', // name
         i: '🎁',
-        rq: 0, // requires none
+        // rq: 0, // requires none
         c: 100,
     },
     {// 42
         n: 'dash', // name
         i: '🏃‍♂️',
-        rq: 5, // requires run
+        // rq: 5, // requires run
         c: 100,
     },
     {// 43
         n: 'climb', // name
         i: '🧗‍♂️',
-        rq: 7, // requires jump
+        // rq: 7, // requires jump
         c: 100,
     },
 ];
@@ -700,7 +702,7 @@ const changeMap = (_new_map) => {
 
 const updateInventoryList = () => {
     // pause screen list
-    l.innerHTML = (inventory.slice(0, inventory_size)
+    $l.innerHTML = (inventory.slice(0, inventory_size)
         .map(({ n, i, t, nw, hd }, _i) => `<div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
         .join('') +
         '<div>←💀</div>' +
@@ -708,17 +710,17 @@ const updateInventoryList = () => {
             `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${inventory[inventory_size].n}</div><div>→🗑</div>`)
     );
 
-    tList.innerHTML = (inventory.slice(0, inventory_size)
+    $tList.innerHTML = (inventory.slice(0, inventory_size)
         .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="trade('s',${_i})"><i>${i}</i>${n}</div><p>${n == 'potion' ? '💓' : c ? c + 'z' : '--'}</p></div>`)
         .join('')
     );
-    tList.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
+    $tList.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
 
     // health bar
-    h.innerHTML = inventory.map(({ i, t, nw, hd }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}  ${hd ? 'hd' : ''}" data-c=${_i}><i>${i}</i></div>`).join('');
-    h.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
+    $h.innerHTML = inventory.map(({ i, t, nw, hd }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}  ${hd ? 'hd' : ''}" data-c=${_i}><i>${i}</i></div>`).join('');
+    $h.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
 
-    m.innerHTML = `💰 ${score_money}z`;
+    $m.innerHTML = `💰 ${score_money}z`;
     // reset inventory animation
     lost_inventory = [];
 };
@@ -774,10 +776,10 @@ const updateAbilityList = () => {
 };
 
 const update_can_do_vision = () => {
-    a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
-    a.height = (can_do_torch ? 480 : 320);
+    $a.width = (can_do_torch ? 720 : 480); // 720x480 vs 480x320
+    $a.height = (can_do_torch ? 480 : 320);
 
-    a.style.filter = `grayscale(${can_do_color ? 0 : 1}) brightness(${can_do_sight ? 1 : 0.16})`;
+    $a.style.filter = `grayscale(${can_do_color ? 0 : 1}) brightness(${can_do_sight ? 1 : 0.16})`;
 }
 
 const update_can_do_weapons = () => {
@@ -1159,7 +1161,7 @@ setInterval(() => {
     frameID++;
 
     // Clear
-    a.width ^= 0;
+    $a.width ^= 0;
 
     // Compute hero position:
     // The hero's bounding rectangle's corners have the following coordinates:
@@ -1502,12 +1504,12 @@ setInterval(() => {
     scroll_y = Math.max(0, Math.min(hero.y - cam_hh, map_h - cam_hh - cam_hh));
 
     // Draw map
-    c.drawImage(
+    $c.drawImage(
         (scene == 'd' ? a_dungeon_cache : a_home_cache),
         scroll_x * tile_w, scroll_y * tile_h,
-        a.width, a.height,
+        $a.width, $a.height,
         0, 0,
-        a.width, a.height
+        $a.width, $a.height
     );
     // // draw coordinates
     // for (let x = draw_x; x < map_w && x <= draw_x + 23; x++) {
@@ -1523,18 +1525,18 @@ setInterval(() => {
     entities.forEach((e) => {
         const { type, x, y, w, h, fc } = e;
         if (type == 'D') {
-            c.fillStyle = "brown";
-            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
-            c.fillStyle = "black";
-            c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
+            $c.fillStyle = "brown";
+            $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            $c.fillStyle = "black";
+            $c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
         }
         if (type == 't') {
-            c.fillStyle = "#ffe";
-            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            $c.fillStyle = "#ffe";
+            $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
         }
         if (type == '3') {
-            c.fillStyle = "red";
-            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            $c.fillStyle = "red";
+            $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
         }
         if (type == 'F') { // effects
             const cx = x + w / 2 - scroll_x;
@@ -1543,20 +1545,20 @@ setInterval(() => {
             const ww = w * e.eff.hp / 30;
             const www = w * e.eff.s * (1 - e.eff.hp / 30);
 
-            fillRectC(c, cx - www, cy - www * fc, ww, ww, e.eff.c, false);
-            fillRectC(c, cx - www * fc, cy + www, ww, ww, e.eff.c, false);
-            fillRectC(c, cx + www * fc, cy - www, ww, ww, e.eff.c, false);
-            fillRectC(c, cx + www, cy + www * fc, ww, ww, e.eff.c, false);
+            fillRectC($c, cx - www, cy - www * fc, ww, ww, e.eff.c, false);
+            fillRectC($c, cx - www * fc, cy + www, ww, ww, e.eff.c, false);
+            fillRectC($c, cx + www * fc, cy - www, ww, ww, e.eff.c, false);
+            fillRectC($c, cx + www, cy + www * fc, ww, ww, e.eff.c, false);
         }
         if (type == 'M') { // magic
-            c.save();
-            c.translate((x + w / 2 - scroll_x) * tile_w, (y + h / 2 - scroll_y) * tile_h);
+            $c.save();
+            $c.translate((x + w / 2 - scroll_x) * tile_w, (y + h / 2 - scroll_y) * tile_h);
             if (e.m.s == 's') {
-                c.rotate(Math.atan2(e.vy, e.vx));
+                $c.rotate(Math.atan2(e.vy, e.vx));
             }
-            c.fillStyle = e.m.c;
-            c.fillRect(-w / 2 * tile_w, -h / 2 * tile_h, w * tile_w, h * tile_h);
-            c.restore();
+            $c.fillStyle = e.m.c;
+            $c.fillRect(-w / 2 * tile_w, -h / 2 * tile_h, w * tile_w, h * tile_h);
+            $c.restore();
         }
         if (type == 'E') {
             // c.fillStyle = "red";
@@ -1569,73 +1571,73 @@ setInterval(() => {
                 switch (n) {
                     case 'Rat':
                         // body
-                        fillRectC(c, cx, cy, w, h, "gray", false);
+                        fillRectC($c, cx, cy, w, h, "gray", false);
                         // head
-                        fillRectC(c, (cx + fc * w / 2), (cy - h * 0.5), w / 4 * 3, h / 2, "gray", false);
+                        fillRectC($c, (cx + fc * w / 2), (cy - h * 0.5), w / 4 * 3, h / 2, "gray", false);
                         // ear
-                        fillRectC(c, (cx + fc * w * 0.3), (cy - h * 0.8), w / 4, h * 0.4, "gray", false);
+                        fillRectC($c, (cx + fc * w * 0.3), (cy - h * 0.8), w / 4, h * 0.4, "gray", false);
                         // tail
-                        fillRectC(c, (cx - fc * w), (cy + h * 0.35), w, h / 4, "brown", false);
+                        fillRectC($c, (cx - fc * w), (cy + h * 0.35), w, h / 4, "brown", false);
                         break;
                     case 'Bat':
                         // foot
-                        fillRectC(c, cx - 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
-                        fillRectC(c, cx + 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
+                        fillRectC($c, cx - 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
+                        fillRectC($c, cx + 0.1, cy - 0.2 * h, w * 0.15, h * 0.6, "#222", false);
                         // body
-                        fillRectC(c, cx, cy + 0.1 * h, w * 0.7, h * 0.7, "navy", false);
-                        c.fillStyle = "navy";
+                        fillRectC($c, cx, cy + 0.1 * h, w * 0.7, h * 0.7, "navy", false);
+                        $c.fillStyle = "navy";
                         flap = (Math.ceil(frameID / 10) % 2 == 0) ? 1 : 0;
                         // wings
-                        c.fillRect((cx - w * 0.7 / 2 - w * 0.7) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
-                        c.fillRect((cx + w * 0.7 / 2) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
+                        $c.fillRect((cx - w * 0.7 / 2 - w * 0.7) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
+                        $c.fillRect((cx + w * 0.7 / 2) * tile_w, (cy - h * 0.8 * flap) * tile_h, (w * 0.7) * tile_w, (h * (0.4 + 0.4 * flap)) * tile_h);
                         // eyes
-                        fillRectC(c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
-                        fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
+                        fillRectC($c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
+                        fillRectC($c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.2, "#fff", false);
                         break;
                     case 'Bee':
                         // antenna
-                        fillRectC(c, cx + 0.4 * w * fc, cy - 0.1 * h, w * 0.5, h * 0.1, "#222", false);
+                        fillRectC($c, cx + 0.4 * w * fc, cy - 0.1 * h, w * 0.5, h * 0.1, "#222", false);
                         // sting
-                        fillRectC(c, cx - w / 2 * fc, cy + 0.2, w * 0.5, h * 0.1, "#222", false);
+                        fillRectC($c, cx - w / 2 * fc, cy + 0.2, w * 0.5, h * 0.1, "#222", false);
                         // body
-                        fillRectC(c, cx, cy + 0.3 * h, w, h * 0.7, "#eb3", false);
+                        fillRectC($c, cx, cy + 0.3 * h, w, h * 0.7, "#eb3", false);
                         flap = (Math.ceil(frameID / 4) % 2 == 0) ? 1 : 0;
                         // eyes
-                        fillRectC(c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.7, "#222", false);
-                        fillRectC(c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.7, "#222", false);
+                        fillRectC($c, cx - 0.1, cy + 0.3 * h, w * 0.1, h * 0.7, "#222", false);
+                        fillRectC($c, cx + 0.1, cy + 0.3 * h, w * 0.1, h * 0.7, "#222", false);
                         // wings
-                        fillRectC(c, cx, cy - (0.1 + 0.2 * flap) / 2, w * 0.5, h * (0.2 + 0.4 * flap), '#ccc');
+                        fillRectC($c, cx, cy - (0.1 + 0.2 * flap) / 2, w * 0.5, h * (0.2 + 0.4 * flap), '#ccc');
                         break;
                 }
             }
-            c.fillStyle = "black";
-            c.textAlign = 'center';
-            c.fillText(`${tg ? '!!' : ''}`, cx * tile_w, (y - 0.2 - scroll_y - 0.3) * tile_h);
+            $c.fillStyle = "black";
+            $c.textAlign = 'center';
+            $c.fillText(`${tg ? '!!' : ''}`, cx * tile_w, (y - 0.2 - scroll_y - 0.3) * tile_h);
             // c.fillText(`d(${dx.toFixed(1)}, ${dy.toFixed(1)})`, cx * tile_w, (y - 0.2 - scroll_y) * tile_h);
         }
         if (type == 'T') { // treasure
             const { item } = e;
             const label = item.n == 'treasure' ? `${item.c}z?` : item.n;
-            c.fillStyle = "orange";
-            c.strokeStyle = "black 2px solid";
-            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h - 1);
-            c.strokeRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h - 1);
-            c.strokeRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h / 3 * tile_h);
-            c.fillStyle = "black";
-            c.textAlign = "center";
-            c.fillText(tryQuestionMark(label), (x + w / 2 - scroll_x) * tile_w, (y - 0.2 - scroll_y) * tile_h);
+            $c.fillStyle = "orange";
+            $c.strokeStyle = "black 2px solid";
+            $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h - 1);
+            $c.strokeRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h - 1);
+            $c.strokeRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h / 3 * tile_h);
+            $c.fillStyle = "black";
+            $c.textAlign = "center";
+            $c.fillText(tryQuestionMark(label), (x + w / 2 - scroll_x) * tile_w, (y - 0.2 - scroll_y) * tile_h);
         }
     });
 
     if (hero.inv < frameID || ~~(frameID / 4) % 2 == 0) {
         // Draw hero
-        c.fillStyle = "gold";
-        c.fillRect((hero.x - scroll_x) * tile_w, (hero.y - scroll_y) * tile_h, hero.w * tile_w, hero.h * tile_h);
+        $c.fillStyle = "gold";
+        $c.fillRect((hero.x - scroll_x) * tile_w, (hero.y - scroll_y) * tile_h, hero.w * tile_w, hero.h * tile_h);
     }
 
     if (hero_is_shielding) {
-        c.fillStyle = "brown";
-        c.fillRect(
+        $c.fillStyle = "brown";
+        $c.fillRect(
             (hero.x - scroll_x + (hero.fc + 1) / 2 * hero.w - 0.1) * tile_w,
             (hero.y - scroll_y + 0.2) * tile_h,
             0.2 * tile_w,
@@ -1643,9 +1645,9 @@ setInterval(() => {
         );
     }
     if (hero_is_shooting > frameID) {
-        c.fillStyle = "brown";
+        $c.fillStyle = "brown";
         const s = getStabbyBox(frameID + 12);
-        c.fillRect(
+        $c.fillRect(
             (s[0] - scroll_x) * tile_w,
             (s[1] - scroll_y) * tile_h,
             s[2] * tile_w,
@@ -1653,9 +1655,9 @@ setInterval(() => {
         );
     }
     if (hero_is_stabbing > frameID) {
-        c.fillStyle = "gray";
+        $c.fillStyle = "gray";
         const s = getStabbyBox(hero_is_stabbing);
-        c.fillRect(
+        $c.fillRect(
             (s[0] - scroll_x) * tile_w,
             (s[1] - scroll_y) * tile_h,
             s[2] * tile_w,
@@ -1668,18 +1670,18 @@ setInterval(() => {
             screen_transition_progress += 16 / 2;
         }
 
-        c.fillStyle = `rgba(0,0,0,${(1 + screen_transition_progress / 1000).toFixed(1)})`;
-        c.fillRect(0, 0, a.width, a.height);
+        $c.fillStyle = `rgba(0,0,0,${(1 + screen_transition_progress / 1000).toFixed(1)})`;
+        $c.fillRect(0, 0, $a.width, $a.height);
 
     } else if (screen_transition_progress > 0) {
-        c.fillStyle = `rgba(0,0,0,${(screen_transition_progress / 1000).toFixed(1)})`;
-        c.fillRect(0, 0, a.width, a.height);
-        c.fillStyle = 'white';
-        c.textAlign = 'center';
-        c.font = `32px Arial`;
-        c.fillText(scene == 'h' ? `Village` : `Dungeon`, a.width / 2, a.height / 2);
-        c.font = `16px Arial`;
-        c.fillText(scene == 'h' ? `Day ${score_day}` : `Night ${score_day}`, a.width / 2, a.height / 2 + 32);
+        $c.fillStyle = `rgba(0,0,0,${(screen_transition_progress / 1000).toFixed(1)})`;
+        $c.fillRect(0, 0, $a.width, $a.height);
+        $c.fillStyle = 'white';
+        $c.textAlign = 'center';
+        $c.font = `32px Arial`;
+        $c.fillText(scene == 'h' ? `Village` : `Dungeon`, $a.width / 2, $a.height / 2);
+        $c.font = `16px Arial`;
+        $c.fillText(scene == 'h' ? `Day ${score_day}` : `Night ${score_day}`, $a.width / 2, $a.height / 2 + 32);
         screen_transition_progress -= 16;
 
         if (screen_transition_progress <= 0) {
