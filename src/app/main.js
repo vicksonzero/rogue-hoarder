@@ -535,11 +535,7 @@ const enemies = [
     },
 ];
 
-const difficulty_curve = [
-    15, 18, 20, 25, 28, 30, 34, 38, 40, 45,
-    50, 55, 61, 62, 65, 70, 77, 84, 90, 98,
-    110, 120, 130, 145, 155, 168, 180, 199, 220, 240,
-];
+
 
 
 // World
@@ -618,6 +614,9 @@ let trade_heal_cost = 100; // multiply by 1.4 each time.
 // 100 * 1.4^5 = 537
 // 100 * 1.4^10 = 2892
 
+let difficulty = 15;
+let difficulty_slope = 3;
+let score_no_damage = true;
 let score_day = 0;
 let score_money = 0;
 
@@ -635,6 +634,8 @@ const changeMap = (_new_map) => {
         hero.y = 5;
     } else {
         score_day++;
+        if (score_no_damage) difficulty_slope += 1.5;
+        difficulty += difficulty_slope;
         hero.x = 9;
         hero.y = 5;
     }
@@ -660,9 +661,8 @@ const changeMap = (_new_map) => {
                 treasureCandidates.push({ x, y });
             }
             if (tile == 't') {
-                entities.push({ type: 't', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1, vy: .1 });
+                entities.push({ type: 't', x: x + 0.3, y, w: 0.6, h: 1, fc: 1, vy: .1 });
             }
-
         }
     }
 
@@ -709,7 +709,7 @@ const updateInventoryList = () => {
     );
 
     tList.innerHTML = (inventory.slice(0, inventory_size)
-        .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="trade('s',${_i})"><i>${i}</i>${n}</div><p>${c ? c + 'z' : 'X'}</p></div>`)
+        .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="trade('s',${_i})"><i>${i}</i>${n}</div><p>${n == 'potion' ? '💓' : c ? c + 'z' : '--'}</p></div>`)
         .join('')
     );
     tList.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
@@ -741,6 +741,9 @@ const updateAbilityList = () => {
         inventory_size = inventory.length;
     }
 
+    const old_can_do_color = can_do_color;
+    const old_can_do_torch = can_do_torch;
+
     can_do_run = (hero_tier >= 2 || inventory.some(card => card.n == 'run'));
     can_do_jump = (hero_tier >= 2 || inventory.some(card => card.n == 'jump'));
     can_do_wield = (hero_tier >= 2 || inventory.some(card => card.n == 'hands'));
@@ -763,7 +766,7 @@ const updateAbilityList = () => {
     can_do_shield = (inventory.some(card => card.n == 'shield'));
     can_do_torch = (inventory.some(card => card.n == 'torch'));
 
-    update_can_do_vision();
+    if (old_can_do_color != can_do_color || old_can_do_torch != can_do_torch) update_can_do_vision();
     update_can_do_weapons();
 };
 
@@ -799,7 +802,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
     let result = [];
     /** @type {IEnemy} */
     let enemy;
-    let score_difficulty = scene == 'h' ? 4 : difficulty_curve[score_day - 1];
+    let score_difficulty = scene == 'h' ? 4 : difficulty;
 
     for (let i = 0; spawnCandidates.length && score_difficulty > 0; i++) {
         const { x, y } = spawnCandidates[~~(Math.random() * spawnCandidates.length)];
@@ -871,6 +874,7 @@ const takeDamage = () => {
     } else {
         inventory.splice(lostIndex, 1);
         spawnEffect(hero, 'red', 0.7);
+        score_no_damage = false;
     }
 
     inventory_size = inventory.length;
@@ -881,7 +885,7 @@ const takeDamage = () => {
 
 const knockBack = (/** @type {IEntity}*/attacker, /** @type {IEntity}*/defender) => {
     const disp = displacement(defender, attacker);
-    defender.vx = Math.sign(disp[0]) * 0.4;
+    defender.vx = Math.sign(disp[0]) * 0.3;
     // console.log('knockback', defender.vx);
     defender.vy = -0.2;
     defender.gd = 0;
@@ -973,7 +977,7 @@ const flyToDestAtSpeed = (/** @type IEntity*/e) => {
     const { dx, dy, sp } = e.enemy;
     const deltaX = dx - x;
     e.x += Math.sign(deltaX) * Math.min(Math.abs(deltaX), sp) + e.vx;
-    e.vx -= (Math.sign(e.vx) * Math.min(Math.abs(e.vx), .04));
+    e.vx -= (Math.sign(e.vx) * Math.min(Math.abs(e.vx), .02));
 
     const deltaY = dy - y;
     e.y += Math.sign(deltaY) * Math.min(Math.abs(deltaY), sp);
@@ -1017,8 +1021,14 @@ const cache_map = (cache, cache_c, _map) => {
     cache.height = _map.length * tile_h;
     _map.forEach((row, y) => row.split('').forEach((tile, x) => {
         if (tile == '1') {
-            cache_c.fillStyle = "green";
+            cache_c.fillStyle = "#831";
             cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
+
+            if (y > 1 && _map[y - 1][x] !='1') {
+                cache_c.fillStyle = "green";
+                cache_c.fillRect(x * tile_w, y * tile_h, tile_w, 8);
+
+            }
         }
         if (tile == 'w' || (tile != 'w' && row[x - 1] == 'w' && row[x + 1] == 'w')) {
             cache_c.fillStyle = "#0B0";
@@ -1122,7 +1132,14 @@ window['trade'] = (type, itemIndex) => {
     console.log('trade', type, item);
 
     if (type == 's') {
-        if (!item.c) return;
+        if (item.n == 'potion') {
+            inventory.push({ n: '', i: '', rq: 1, nw: 1 });
+            inventory_size = inventory.length;
+        }
+        else if (!item.c) {
+            return;
+        }
+
         const lostItem = inventory[itemIndex];
         if (cards.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
             lostAbilities.push(lostItem);
@@ -1160,7 +1177,7 @@ setInterval(() => {
     hero.vy += hero_g;
     if (hero.vy > 0) hero_g = g2;
     if (hero.vy > 0.2) hero.vy = 0.2;
-    hero.vx -= (Math.sign(hero.vx) * Math.min(Math.abs(hero.vx), .04));
+    hero.vx -= (Math.sign(hero.vx) * Math.min(Math.abs(hero.vx), .02));
 
     hero.y = tryMoveY(
         hero,
@@ -1204,7 +1221,7 @@ setInterval(() => {
         // If up key is pressed and the hero is grounded, jump
         if (input.u && hero.vy >= 0 && hero.gd >= frameID && hero_can_jump) {
             // console.log('jump', hero.gd, frameID);
-            hero.vy = -.315;
+            hero.vy = can_do_jump ? -.315 : -.2;
             hero_g = g1;
             hero_can_jump = 0;
         }
@@ -1383,7 +1400,7 @@ setInterval(() => {
                     const deltaX = Math.sign(dx - x) * Math.min(Math.abs(dx - x), sp) + e.vx;
 
                     // move according to direction and min speed between remaining and allowed speed
-                    e.vx -= (Math.sign(e.vx) * Math.min(Math.abs(e.vx), .04));
+                    e.vx -= (Math.sign(e.vx) * Math.min(Math.abs(e.vx), .02));
 
                     tryMoveX(e, deltaX, map);
                     e.vy += g1;
@@ -1610,7 +1627,7 @@ setInterval(() => {
 
     if (hero.inv < frameID || ~~(frameID / 4) % 2 == 0) {
         // Draw hero
-        c.fillStyle = "orange";
+        c.fillStyle = "gold";
         c.fillRect((hero.x - scroll_x) * tile_w, (hero.y - scroll_y) * tile_h, hero.w * tile_w, hero.h * tile_h);
     }
 

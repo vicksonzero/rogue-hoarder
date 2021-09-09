@@ -8,7 +8,7 @@ body {
 }
 
 body {
-  background-color: #fff;
+  background: #fff;
 }
 
 .container {
@@ -28,6 +28,7 @@ body {
   position: absolute;
   width: 720px;
   height: 480px;
+  background: #c96;
 }
 #h {
   position: absolute;
@@ -51,7 +52,7 @@ body {
   right: 0;
   width: 100px;
   height: 40px;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5);
 }
 #excess-note {
   display: none;
