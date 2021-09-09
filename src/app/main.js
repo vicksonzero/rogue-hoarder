@@ -49,6 +49,7 @@ const $end = document.querySelector("#end");
 const $c = $a.getContext("2d");
 $p.style.display = 'none';
 $t.style.display = 'none';
+$end.style.display = 'none';
 $c.imageSmoothingEnabled = false;
 $h.onclick = pauseGame;
 
@@ -159,13 +160,13 @@ const cards = [
         // rq: 1, // requires live
     },
     {// 1
-        n: 'live', // name
+        n: 'life', // name
         i: '🤍',
         // rq: 1, // requires live
     },
     {// 2
         n: 'love', // name
-        i: '❤',
+        i: '💓',
         // rq: 1, // requires live
     },
     {// 3
@@ -618,6 +619,9 @@ let trade_heal_cost = 100; // multiply by 1.4 each time.
 
 let difficulty = 15;
 let difficulty_slope = 3;
+
+let game_is_over = false;
+
 let score_no_damage = true;
 let score_day = 0;
 let score_money = 0;
@@ -700,6 +704,14 @@ const changeMap = (_new_map) => {
     screen_transition_progress = 2000;
 };
 
+const gameOver = () => {
+    game_is_over = true;
+
+    $end.innerHTML = `<div><h1>Game Over</h1><p>You have survived ${score_day - 1} nights,<br>and gained ${score_money}z</p><p>At the cost of ${lostAbilities.map(a => a.i).join(', ')}</p><p>&lt;Refresh the webpage to restart&gt;</p></div>`;
+
+    $end.style.display = 'flex';
+}
+
 const updateInventoryList = () => {
     // pause screen list
     $l.innerHTML = (inventory.slice(0, inventory_size)
@@ -732,8 +744,11 @@ const updateAbilityList = () => {
         hero_tier = 2;
     } else if (hero_tier == 2 && inventory.filter(card => card.t == 2).length <= 1) { // if enough tier 2 is lost
         hero_tier = 1;
-    } else if (hero_tier == 1 && inventory.filter(card => card.t == 1).length <= 1) { // if enough tier 1 is lost
+    } else if (hero_tier == 1 && inventory.filter(card => card.t == 1).length <= 3) { // if enough tier 1 is lost
         hero_tier = 0;
+    } else if (hero_tier == 0 && inventory.every(card => card.n != 'life')) { // if life is lost
+        gameOver();
+        return;
     }
 
     if (old_tier != hero_tier) {
@@ -869,7 +884,8 @@ const takeDamage = () => {
     const lostIndex = (lastArmorIndex > -1 ? inventory.length - lastArmorIndex : inventory.length) - 1;
     // console.log('lostIndex', lostIndex);
     const lostItem = inventory[lostIndex];
-    if (cards.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
+    console.log('lost item', lostItem.n, cards.findIndex(item => item.n == lostItem.n));
+    if (lostItem.n != '' && cards.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
         lostAbilities.push(lostItem);
     }
     lost_inventory = [lostItem];
@@ -1086,7 +1102,7 @@ const keyHandler = (e) => {
         input.c1 = 0;
     }
     if (input.s && 's' == keyMap[w]) {
-        pauseGame();
+        if (!game_is_over) pauseGame();
         input.s = 0;
     }
 
@@ -1158,6 +1174,7 @@ window['trade'] = (type, itemIndex) => {
 
 // Game loop (60 fps)
 setInterval(() => {
+    if (game_is_over) return;
     frameID++;
 
     // Clear
