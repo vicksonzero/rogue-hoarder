@@ -9,8 +9,9 @@ const pauseGame = () => {
     if (paused) {
         // console.log('pauseGame');
         screen_transition_progress = -1000;
-
-        p.style.display = 'block';
+        console.log('trade_type', trade_type);
+        p.style.display = trade_type == '_' ? 'block' : 'none';
+        t.style.display = trade_type == '_' ? 'none' : 'block';
         h.style.display = 'none';
         xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
         inventory.forEach(e => e.nw = 0);
@@ -22,23 +23,32 @@ const pauseGame = () => {
         updateAbilityList();
         updateInventoryList();
         p.style.display = 'none';
+        t.style.display = 'none';
+
         h.style.display = 'flex';
     }
 };
 
 /** @type HTMLDivElement */
 const h = document.querySelector("#h");
+/** @type HTMLDivElement */
+const m = document.querySelector("#m");
 
 /** @type HTMLDivElement */
 const xn = document.querySelector("#excess-note");
 /** @type HTMLDivElement */
+const t = document.querySelector("#t");
+/** @type HTMLDivElement */
+const tList = document.querySelector("#tList");
+/** @type HTMLDivElement */
 const l = document.querySelector("#list");
 /** @type HTMLDivElement */
 const p = document.querySelector("#p");
-p.style.display = 'none';
 const c = a.getContext("2d");
+p.style.display = 'none';
+t.style.display = 'none';
 c.imageSmoothingEnabled = false;
-h.onclick=pauseGame;
+h.onclick = pauseGame;
 
 // cache
 const a_dungeon_cache = document.createElement("canvas");
@@ -108,12 +118,12 @@ const map_home = [
     "10000000000000000000000000000001",
     "10000000000000000000000001111111",
     "10000000000000000000000000000001",
-    "10000000000000000001110000000001",
+    "10000000d0000t000001110000000001",
     "10000001111111111000000000000001",
     "11000000000000000000000000000001",
     "11000000000000000000011111100001",
     "11000111000000000000000000000000",
-    "11d000000003wwwwwwwwww000000000D",
+    "110000000003wwwwwwwwww000000000D",
     "11111111111111111111111111111111",
 ];
 
@@ -121,20 +131,21 @@ const map_home = [
 
 /**
  * @typedef ICard
-   @property {string} n - name
-   @property {string} i - icon
-   @property {number} rq - card requirements
-   @property {number} [t] - card tier
-   @property {number} [c] - card sell cost
+ * @property {string} n - name
+ * @property {string} i - icon
+ * @property {number} rq - card requirements
+ * @property {number} [t] - card tier
+ * @property {number} [c] - card sell cost
  */
 /**
  * @typedef IItem
-   @property {string} n - name
-   @property {string} i - icon
-   @property {number} rq - card requirements
-   @property {number} [t] - card tier
-   @property {number} [nw] - 1=new? 0=old -1=removing
-   @property {number} [hd] - active item?
+ * @property {string} n - name
+ * @property {string} i - icon
+ * @property {number} rq - card requirements
+ * @property {number} [t] - card tier
+ * @property {number} [nw] - 1=new? 0=old -1=removing
+ * @property {number} [hd] - active item?
+ * @property {number} [c] - card sell cost
  */
 
 
@@ -346,31 +357,31 @@ for (let i = 0; i < tiers.length; i++) {
 
 /**
  * @typedef IEnemyDef 
-   @property {string} n
-   @property {number} d
-   @property {number} hp
-   @property {number} w
-   @property {number} h
-   @property {number} sp
-   @property {string} b
+ * @property {string} n
+ * @property {number} d
+ * @property {number} hp
+ * @property {number} w
+ * @property {number} h
+ * @property {number} sp
+ * @property {string} b
  */
 /**
  * @typedef IEnemy
-   @property {string} n                        - name. identifier for the enemy's type
-   @property {number} d                        - difficulty rating. is negotiated against level difficulty budget when spawning
-   @property {number} hp                       - an enemy instance dies when hp is 0
-   @property {number} maxHp                    - max hp, is copied from IEnemyDef.hp
-   @property {number} w                        - width, will be copied to entity
-   @property {number} h                        - height, will be copied to entity
-   @property {number} sp                       - moving speed
-   @property {string} b                        - behaviors string
-   @property {'' | 'F' | 'W' | 'E'} el         - type of element (F=Fire, W=Water, E=Electric)
-   @property {number} sx                       - spawn x
-   @property {number} sy                       - spawn y
-   @property {number} dx                       - dest x
-   @property {number} dy                       - dest y
-   @property {number} ai                       - next ai tick
-   @property {number} tg                       - is targeting player?
+ * @property {string} n                        - name. identifier for the enemy's type
+ * @property {number} d                        - difficulty rating. is negotiated against level difficulty budget when spawning
+ * @property {number} hp                       - an enemy instance dies when hp is 0
+ * @property {number} maxHp                    - max hp, is copied from IEnemyDef.hp
+ * @property {number} w                        - width, will be copied to entity
+ * @property {number} h                        - height, will be copied to entity
+ * @property {number} sp                       - moving speed
+ * @property {string} b                        - behaviors string
+ * @property {'' | 'F' | 'W' | 'E'} el         - type of element (F=Fire, W=Water, E=Electric)
+ * @property {number} sx                       - spawn x
+ * @property {number} sy                       - spawn y
+ * @property {number} dx                       - dest x
+ * @property {number} dy                       - dest y
+ * @property {number} ai                       - next ai tick
+ * @property {number} tg                       - is targeting player?
  */
 
 /**
@@ -389,27 +400,27 @@ for (let i = 0; i < tiers.length; i++) {
 
 /**
  * @typedef ITransform
-   @property {number} x          - 
-   @property {number} y          - 
-   @property {number} w          - 
-   @property {number} h          - 
+ * @property {number} x          - 
+ * @property {number} y          - 
+ * @property {number} w          - 
+ * @property {number} h          - 
  */
 /**
  * @typedef IEntity
-   @property {string} type       - 
-   @property {number} x          - 
-   @property {number} y          - 
-   @property {number} w          - 
-   @property {number} h          - 
-   @property {number} fc         - facing direction. -1 means left, 1 means right
-   @property {number} [gd]       - grounded
-   @property {number} [inv]       - invincible until
-   @property {number} [vx]       - velocity x, used for knock back or others
-   @property {number} [vy]       - velocity y, used for gravity
-   @property {ICard} [item]      - 
-   @property {IEnemy} [enemy]    - 
-   @property {IEffect} [eff]     - 
-   @property {IMagic} [m]     - 
+ * @property {string} type       - 
+ * @property {number} x          - 
+ * @property {number} y          - 
+ * @property {number} w          - 
+ * @property {number} h          - 
+ * @property {number} fc         - facing direction. -1 means left, 1 means right
+ * @property {number} [gd]       - grounded
+ * @property {number} [inv]       - invincible until
+ * @property {number} [vx]       - velocity x, used for knock back or others
+ * @property {number} [vy]       - velocity y, used for gravity
+ * @property {ICard} [item]      - 
+ * @property {IEnemy} [enemy]    - 
+ * @property {IEffect} [eff]     - 
+ * @property {IMagic} [m]     - 
  */
 
 /** @type {IEnemyDef[]} */
@@ -599,6 +610,14 @@ let lost_inventory = [];
 let inventory_size = inventory.length;
 let lostAbilities = [];
 
+// _ = no one near
+// s = sell (item -> coin)
+// b = buy (coin -> slots)
+let trade_type = 's';
+let trade_heal_cost = 100; // multiply by 1.4 each time. 
+// 100 * 1.4^5 = 537
+// 100 * 1.4^10 = 2892
+
 let score_day = 0;
 let score_money = 0;
 
@@ -640,6 +659,10 @@ const changeMap = (_new_map) => {
             if (tile == 'T') {
                 treasureCandidates.push({ x, y });
             }
+            if (tile == 't') {
+                entities.push({ type: 't', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1, vy: .1 });
+            }
+
         }
     }
 
@@ -676,15 +699,27 @@ const changeMap = (_new_map) => {
 };
 
 const updateInventoryList = () => {
+    // pause screen list
     l.innerHTML = (inventory.slice(0, inventory_size)
-        .map(({ n, i, t, nw, hd }, _i) => `<div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${tryQuestionMark(n)}</div>`)
+        .map(({ n, i, t, nw, hd }, _i) => `<div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="prioritize(${_i})"><i>${i}</i>${n}</div>`)
         .join('') +
         '<div>←💀</div>' +
         (inventory.length <= inventory_size ? '' :
-            `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${tryQuestionMark(inventory[inventory_size].n)}</div><div>→🗑</div>`)
+            `<div class="card c-${inventory[inventory_size].t}" data-c=${inventory_size}><i>${inventory[inventory_size].i}</i>${inventory[inventory_size].n}</div><div>→🗑</div>`)
     );
-    h.innerHTML = inventory.map(({ i, t, nw, hd }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}  ${hd ? 'hd' : ''}" data-c=${_i}>${i}</div>`).join('');
-    h.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}>${i}</div>`).join('');
+
+    tList.innerHTML = (inventory.slice(0, inventory_size)
+        .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="trade('s',${_i})"><i>${i}</i>${n}</div><p>${c ? c + 'z' : 'X'}</p></div>`)
+        .join('')
+    );
+    tList.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
+
+    // health bar
+    h.innerHTML = inventory.map(({ i, t, nw, hd }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}  ${hd ? 'hd' : ''}" data-c=${_i}><i>${i}</i></div>`).join('');
+    h.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
+
+    m.innerHTML = `💰 ${score_money}z`;
+    // reset inventory animation
     lost_inventory = [];
 };
 
@@ -825,7 +860,6 @@ const takeDamage = () => {
 
     const lostIndex = (lastArmorIndex > -1 ? inventory.length - lastArmorIndex : inventory.length) - 1;
     // console.log('lostIndex', lostIndex);
-
     const lostItem = inventory[lostIndex];
     if (cards.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
         lostAbilities.push(lostItem);
@@ -962,11 +996,10 @@ const addItem = (item) => {
     }
 };
 
-const trade = (index) => {
-    const item = inventory[index];
-    console.log('trade', item);
+const removeItem = (itemIndex) => {
 
 }
+
 
 const tryQuestionMark = (str) => (can_do_speech ? str : Array(str.length).fill('?').join(''));
 
@@ -1008,7 +1041,7 @@ const input = {
 const keyHandler = (e) => {
     const w = e.keyCode, t = e.type;
 
-    console.log("keyHandler", w, t);
+    // console.log("keyHandler", w, t);
 
     // -4 bytes zipped compared to if-statements
     const keyMap = {
@@ -1028,11 +1061,6 @@ const keyHandler = (e) => {
         32: 's', /* space */
         8: 'b', /* backspace */
     };
-
-    if (t[3] < 'u' && w >= 49 && w <= 57) {
-        trade(w - 49);
-        return;
-    }
 
     if (!keyMap[w]) return;
 
@@ -1059,6 +1087,7 @@ window.addEventListener('keyup', keyHandler);
 
 /* #IfDev */
 window['test'] = {
+    get hero() { return hero },
     get entities() { return entities },
     get cards() { return cards },
     get transition_progress() { return screen_transition_progress },
@@ -1084,6 +1113,25 @@ updateInventoryList();
 window['prioritize'] = (i) => {
     const item = inventory.splice(i, 1)[0];
     inventory.push(item);
+    updateInventoryList();
+}
+
+window['trade'] = (type, itemIndex) => {
+    trade_type = type;
+    const item = inventory[itemIndex];
+    console.log('trade', type, item);
+
+    if (type == 's') {
+        if (!item.c) return;
+        const lostItem = inventory[itemIndex];
+        if (cards.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
+            lostAbilities.push(lostItem);
+        }
+        lost_inventory = [lostItem];
+        score_money += lostItem.c;
+        inventory.splice(itemIndex, 1, { n: '', i: '', rq: 1 });
+    }
+    updateAbilityList();
     updateInventoryList();
 }
 
@@ -1193,10 +1241,17 @@ setInterval(() => {
             hero_is_shielding = 0;
         }
 
+        const trader = entities.filter(e => e.type == 't')
+            .map(e => ({ ...e, dist: distance(displacement(e, hero)) }))
+            .reduce((acc, e) => {
+                return e.dist < acc.dist ? e : acc;
+            }, { dist: Infinity });
+        trade_type = trader.dist < 1 ? 's' : '_';
+
         // update entity
         // update other entities
-        for (let index = 0; index < entities.length; index++) {
-            const e = entities[index];
+        for (let entityIndex = 0; entityIndex < entities.length; entityIndex++) {
+            const e = entities[entityIndex];
             const { type, x, y, w, h } = e;
 
             const s = getStabbyBox(hero_is_stabbing);
@@ -1213,8 +1268,8 @@ setInterval(() => {
                 // TODO: extract the callback for optimization
                 const remove_magic = () => {
                     spawnEffect(e, e.m.c, 1);
-                    entities.splice(index, 1);
-                    index--;
+                    entities.splice(entityIndex, 1);
+                    entityIndex--;
                 }
                 if (x + w + e.vx > map_w) {
                     remove_magic();
@@ -1225,7 +1280,7 @@ setInterval(() => {
 
             }
             if (type == 'E') {
-                // console.log(`------------------------ ai ${index}`);
+                // console.log(`------------------------ ai ${entityIndex}`);
                 // AI update
                 const wanderDist = 1;
                 const patrolDist = 3;
@@ -1307,13 +1362,13 @@ setInterval(() => {
                     knockBack(hero, e);
                     if (shootyCollisionIndex > -1) {
                         entities.splice(shootyCollisionIndex, 1);
-                        if (shootyCollisionIndex < index) index--;
+                        if (shootyCollisionIndex < entityIndex) entityIndex--;
                     }
                     if (e.enemy.hp <= 0) {
                         spawnEffect(e, '#b3e', 2, 0);
                         spawnEffect(e, '#888', 2.5);
-                        entities.splice(index, 1);
-                        index--;
+                        entities.splice(entityIndex, 1);
+                        entityIndex--;
                         continue;
                     }
                 }
@@ -1341,15 +1396,15 @@ setInterval(() => {
                 if (tg) e.fc = (hero.x > x ? 1 : -1);
             }
             if (type == 'F' && e.eff.hp-- < 0) { // effects
-                entities.splice(index, 1);
-                index--;
+                entities.splice(entityIndex, 1);
+                entityIndex--;
                 continue;
             }
             if (type == '3' && stabbyHasCollision) {
                 spawnEffect(e, '#A02', 3);
                 spawnEffect(e, 'red', 2.2, 0);
-                entities.splice(index, 1);
-                index--;
+                entities.splice(entityIndex, 1);
+                entityIndex--;
                 continue;
             }
 
@@ -1375,8 +1430,8 @@ setInterval(() => {
                         ;
                     if (!hero_is_shielding || !can_shield) {
                         takeDamage();
-                        entities.splice(index, 1);
-                        index--;
+                        entities.splice(entityIndex, 1);
+                        entityIndex--;
                     }
                     knockBack(e, hero);
                 }
@@ -1392,8 +1447,8 @@ setInterval(() => {
                         knockBack(e, hero);
                     }
                     spawnEffect(e, e.m.c, 1);
-                    entities.splice(index, 1);
-                    index--;
+                    entities.splice(entityIndex, 1);
+                    entityIndex--;
                 }
                 if (type == 'E') {
                     // console.log('enemy!');
@@ -1413,10 +1468,10 @@ setInterval(() => {
                 }
             }
             if (type == 'T') {
-                const { item } = entities[index];
+                const { item } = entities[entityIndex];
                 addItem(item);
-                entities.splice(index, 1);
-                index--;
+                entities.splice(entityIndex, 1);
+                entityIndex--;
             }
         }
     }
@@ -1453,6 +1508,10 @@ setInterval(() => {
             c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
             c.fillStyle = "black";
             c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
+        }
+        if (type == 't') {
+            c.fillStyle = "white";
+            c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
         }
         if (type == '3') {
             c.fillStyle = "red";
