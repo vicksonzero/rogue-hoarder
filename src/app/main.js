@@ -625,6 +625,7 @@ let game_is_over = false;
 let score_no_damage = true;
 let score_day = 0;
 let score_money = 0;
+let score_high_score = Number(localStorage.getItem('dicksonmd.RogueHoarder.HighScore'));
 
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
@@ -642,7 +643,7 @@ const changeMap = (_new_map) => {
         score_day++;
         if (score_no_damage) difficulty_slope += 1.5;
         difficulty += difficulty_slope;
-        hero.x = 5;
+        hero.x = 3;
         hero.y = 7;
     }
 
@@ -706,8 +707,9 @@ const changeMap = (_new_map) => {
 
 const gameOver = () => {
     game_is_over = true;
-
-    $end.innerHTML = `<div><h1>Game Over</h1><p>You have survived ${score_day - 1} nights,<br>and gained ${score_money}z</p><p>At the cost of ${lostAbilities.map(a => a.i).join(', ')}</p><p>&lt;Refresh the webpage to restart&gt;</p></div>`;
+    score_high_score = Math.max(score_money, score_high_score);
+    localStorage.setItem('dicksonmd.RogueHoarder.HighScore', "" + score_high_score);
+    $end.innerHTML = `<div><h1>Game Over</h1><p>You have survived ${score_day - 1} nights,<br>and gained ${score_money}z</p><p>At the cost of ${lostAbilities.map(a => a.i).join(', ')}</p><p>&lt;Refresh the webpage to restart&gt;</p><p>High score: ${score_high_score}z</p></div>`;
 
     $end.style.display = 'flex';
 }
@@ -1697,7 +1699,9 @@ setInterval(() => {
         $c.fillText(`Go through the cave to enter dungeon →`, (39 - scroll_x) * tile_w, (11 - scroll_y) * tile_h);
         $c.fillText(`Press <Space> to rearrange your life priorities`, (35 - scroll_x) * tile_w, (8 - scroll_y) * tile_h);
         $c.textAlign = 'center';
-        $c.fillText(`Press ${['WASD', 'ZQSD', '↑←↓→'][~~(frameID / 150) % 3]} to move and jump`, (7.5 - scroll_x) * tile_w, (10 - scroll_y) * tile_h);
+        $c.fillText(`By vicksonzero`, (7.5 - scroll_x) * tile_w, (8.5 - scroll_y) * tile_h);
+        $c.fillText(`High Score: ${score_high_score}z`, (7.5 - scroll_x) * tile_w, (9.5 - scroll_y) * tile_h);
+        $c.fillText(`Press ${['WASD', 'ZQSD', '↑←↓→'][~~(frameID / 150) % 3]} to move and jump`, (7.5 - scroll_x) * tile_w, (11 - scroll_y) * tile_h);
         $c.font = $c.font.replace(/\d+px/, "48px");
         $c.fillText(`Rogue-Hoarder`, (7.5 - scroll_x) * tile_w, (8 - scroll_y) * tile_h);
         $c.font = $c.font.replace(/\d+px/, "12px");
