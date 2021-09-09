@@ -1548,8 +1548,13 @@ setInterval(() => {
             $c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
         }
         if (type == 't') {
+            const cx = x + w / 2 - scroll_x;
+            const cy = y + h / 2 - scroll_y;
             $c.fillStyle = "#ffe";
             $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+            $c.fillStyle = "#000";
+            $c.textAlign = 'center';
+            $c.fillText(`Trade here`, cx * tile_w, (y - 0.2 - scroll_y - 0.3) * tile_h);
         }
         if (type == '3') {
             $c.fillStyle = "red";
