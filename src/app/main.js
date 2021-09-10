@@ -982,7 +982,7 @@ const distance = (disp) => {
 
 const getStabbyBox = (hero_is_attacking) => {
     return [
-        hero.x + hero.fc * (1 - Math.max(0, hero_is_attacking - frameID) / 15 * 0.7 - 0.1 * (hero.fc + 1)),
+        hero.x + hero.fc * (1 - Math.max(0, hero_is_attacking - frameID) / 15 * 0.5 - 0.1 * (hero.fc + 1)),
         hero.y + 0.43,
         0.8,
         0.2
@@ -1836,8 +1836,8 @@ setInterval(() => {
         // $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
 
         // legs
-        fillRectC($c, cx + 0.095, cy + 0.25, w * 0.2, h * (gd > frameID && isMoving && !leg ? 0.4 : 0.5), 'gold');
-        fillRectC($c, cx - 0.095, cy + 0.25, w * 0.2, h * (gd > frameID && isMoving && leg ? 0.4 : 0.5), 'gold');
+        fillRectC($c, cx + fc * 0.095, cy + 0.25, w * 0.2, h * ((gd < frameID) ? 0.35 : (isMoving && !leg) ? 0.35 : 0.5), 'gold');
+        fillRectC($c, cx - fc * 0.095, cy + 0.25, w * 0.2, h * ((gd < frameID) ? 0.5 : (isMoving && leg) ? 0.35 : 0.5), 'gold');
 
         // back arm
         fillRectC($c, cx - fc * 0.2, cy + 0.02, w * 0.3, h * 0.1, 'gold');
