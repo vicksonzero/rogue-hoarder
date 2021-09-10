@@ -279,7 +279,7 @@ const cards = [
         c: 200,
     },
     {// 34
-        n: 'elem armor', // name
+        n: 'elem helmet', // name
         i: '🧢',
         // rq: 1, // requires live
         c: 400,
@@ -349,7 +349,7 @@ const tiers = [
 const rare = [
     /* 0 = common    */[35, 36],
     /* 1 = rare      */[30, 30, 30, 32, 32, 32, 33, 31], // [30, 32, 33],
-    /* 2 = epic      */[31, 34, 37, 38, 42, 43],
+    /* 2 = epic      */[31, 37, 38, 42, 43], // 34
     /* 3 = legendary */[39, 40],
     /* 4 = treasure  */[41],
 ];
@@ -619,7 +619,7 @@ let hero_is_shielding = 0;  // (bool) hero blocking with shield
 let hero_tier = 3; // used to unlock health cards
 
 /** @type {Array<IItem>} */
-let inventory = [3, 42, 33, 0].map(i => (cards[i]));
+let inventory = [3, 0, 33, 0].map(i => (cards[i]));
 let lost_inventory = [];
 let inventory_size = inventory.length;
 /** @type {Array<IItem>} */
@@ -820,6 +820,7 @@ const updateAbilityList = () => {
     // health
     can_do_sort = (hero_tier >= 3 || inventory.some(card => card.n == 'mind'));
     can_do_armor = (hero_tier >= 3 || inventory.some(card => card.n == 'strength'));
+    // can_do_helmet = (hero_tier >= 3 || inventory.some(card => card.n == 'strength'));
     can_do_color = (hero_tier >= 3 || inventory.some(card => card.n == 'color'));
     can_do_speech = (hero_tier >= 3 || inventory.some(card => card.n == 'speech'));
 
@@ -982,7 +983,7 @@ const distance = (disp) => {
 const getStabbyBox = (hero_is_attacking) => {
     return [
         hero.x + hero.fc * (1 - Math.max(0, hero_is_attacking - frameID) / 15 * 0.7 - 0.1 * (hero.fc + 1)),
-        hero.y + 0.4,
+        hero.y + 0.43,
         0.8,
         0.2
     ];
@@ -1256,7 +1257,7 @@ window['trade'] = (type, itemIndex) => {
             lostAbilities.push(lostItem);
         }
         lost_inventory = [lostItem];
-        score_money += lostItem.c + lostItem.n != 'treasure' ? 0 : ~~(Math.random() * lostItem.c * 0.5);
+        score_money += lostItem.c + (lostItem.n != 'treasure' ? 0 : ~~(Math.random() * lostItem.c * 0.5));
         inventory.splice(itemIndex, 1, { n: '', i: '', rq: 1 });
     }
     updateAbilityList();
@@ -1319,7 +1320,7 @@ setInterval(() => {
         const mv = input.l ? -1 : input.r ? 1 : 0;
         const not_enough_strength = !can_do_armor && inventory.some(card => card.n == 'armor');
         const run_slow = hero_is_shielding || !can_do_run || not_enough_strength;
-        if (!input_move_is_down && mv) {
+        if (can_do_sprint && !input_move_is_down && mv) {
             if (hero_can_sprint == 0) {
                 hero_can_sprint = frameID + 30;
                 // console.log('down', frameID, hero_can_sprint);
@@ -1417,7 +1418,9 @@ setInterval(() => {
             NPCs.forEach(({ npc }) => npc.i = 0);
             trade_type = '_';
         }
-        NPCs.forEach(({ npc }) => {
+        NPCs.forEach((e) => {
+            const { npc } = e;
+            e.fc = (hero.x > e.x ? 1 : -1);
             if (npc.t != 't' && npc.i > 0 && npc.i < frameID) {
                 console.log('npc action', npc);
 
@@ -1704,13 +1707,29 @@ setInterval(() => {
             const { i, n, t } = e.npc;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
-            const msg = t == 't' ? 'Press <Space> to trade' : dialogPool[randomFromName(n, dialog_seed) % dialogPool.length];
+            const msg = t == 't' ? 'Press <Space> to trade' : tryQuestionMark(dialogPool[randomFromName(n, dialog_seed) % dialogPool.length]);
             $c.fillStyle = "#ffe";
-            $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+
+            $c.fillStyle = "gold";
+            $c.fillRect((x + w * 0.25 - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * 0.2 * tile_w, h * tile_h);
+            $c.fillRect((x + w * 0.55 - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * 0.2 * tile_w, h * tile_h);
+            // back arm
+            fillRectC($c, cx - fc * 0.2, cy + 0.09, w * 0.3, h * 0.1, 'gold');
+            // front arm
+            fillRectC($c, cx + fc * 0.2, cy + 0.09, w * 0.3, h * 0.1, 'gold');
+
+            // body
+            fillRectC($c, cx, cy, w * 0.52, h * 0.65, '#ffe');
+            $c.fillStyle = "gold";
+            $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h / 2 * tile_h);
+            // eyes
+            fillRectC($c, cx + fc * 0.15, cy - 0.3, w * 0.07, h * 0.2, "black");
+            fillRectC($c, cx + fc * 0.05, cy - 0.3, w * 0.07, h * 0.2, "black");
+
             $c.fillStyle = "#000";
             $c.textAlign = 'center';
 
-            $c.fillText((i > 0 ? msg : i < -1 ? 'Here, take this with you.' : n) + (i < 0 ? '❤️' : '') /* + `(${i})` */, cx * tile_w, (y - 0.5 - scroll_y) * tile_h);
+            $c.fillText((i > 0 ? msg : i < -1 ? tryQuestionMark('Here, take this with you.') : n) + (i < 0 ? '❤️' : '') /* + `(${i})` */, cx * tile_w, (y - 0.5 - scroll_y) * tile_h);
         }
         if (type == '3') {
             $c.fillStyle = "red";
@@ -1808,9 +1827,32 @@ setInterval(() => {
     });
 
     if (hero.inv < frameID || ~~(frameID / 4) % 2 == 0) {
-        // Draw hero
-        $c.fillStyle = "gold";
-        $c.fillRect((hero.x - scroll_x) * tile_w, (hero.y - scroll_y) * tile_h, hero.w * tile_w, hero.h * tile_h);
+        const { x, y, w, h, gd, fc } = hero;
+        const cx = x + w / 2 - scroll_x;
+        const cy = y + h / 2 - scroll_y;
+        const isMoving = (input.l || input.r);
+        const leg = ~~(frameID / 10) % 2 == 0;
+        // $c.fillStyle = "red";
+        // $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
+
+        // legs
+        fillRectC($c, cx + 0.095, cy + 0.25, w * 0.2, h * (gd > frameID && isMoving && !leg ? 0.4 : 0.5), 'gold');
+        fillRectC($c, cx - 0.095, cy + 0.25, w * 0.2, h * (gd > frameID && isMoving && leg ? 0.4 : 0.5), 'gold');
+
+        // back arm
+        fillRectC($c, cx - fc * 0.2, cy + 0.02, w * 0.3, h * 0.1, 'gold');
+        // front arm
+        if (hero_is_stabbing < frameID && hero_is_shooting < frameID && !hero_is_shielding) {
+            fillRectC($c, cx + fc * 0.2, cy + 0.02, w * 0.3, h * 0.1, 'gold');
+        }
+        // body / armour
+        fillRectC($c, cx, cy, w * 0.52, h * 0.65, inventory.some(card => card.n == 'armor') ? 'gray' : 'gold');
+        // fillRectC($c, cx, cy - 0.3, w, h * 0.5, "gray");
+        // head
+        fillRectC($c, cx, cy - 0.3, w * 0.9, h * 0.5, "gold");
+        // eyes
+        fillRectC($c, cx + fc * 0.15, cy - 0.3, w * 0.07, h * 0.2, "black");
+        fillRectC($c, cx + fc * 0.05, cy - 0.3, w * 0.07, h * 0.2, "black");
     }
 
     if (hero_is_shielding) {
@@ -1833,7 +1875,7 @@ setInterval(() => {
         );
     }
     if (hero_is_stabbing > frameID) {
-        $c.fillStyle = "gray";
+        $c.fillStyle = "silver";
         const s = getStabbyBox(hero_is_stabbing);
         $c.fillRect(
             (s[0] - scroll_x) * tile_w,
