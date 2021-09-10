@@ -400,6 +400,13 @@ for (let i = 0; i < tiers.length; i++) {
  * @property {string} s    - style, m=magic, s=bee-sting
  */
 
+/**
+ * @typedef INpc
+ * @property {string} t    - type (f=friend, m=family, t=trader, d=doctor)
+ * @property {number} i    - interaction (0=idle)
+ * @property {string} n    - name for display
+ */
+
 
 /**
  * @typedef ITransform
@@ -417,13 +424,14 @@ for (let i = 0; i < tiers.length; i++) {
  * @property {number} h          - 
  * @property {number} fc         - facing direction. -1 means left, 1 means right
  * @property {number} [gd]       - grounded
- * @property {number} [inv]       - invincible until
+ * @property {number} [inv]      - invincible until
  * @property {number} [vx]       - velocity x, used for knock back or others
  * @property {number} [vy]       - velocity y, used for gravity
  * @property {ICard} [item]      - 
  * @property {IEnemy} [enemy]    - 
  * @property {IEffect} [eff]     - 
- * @property {IMagic} [m]     - 
+ * @property {INpc} [npc]        - 
+ * @property {IMagic} [m]        - 
  */
 
 /** @type {IEnemyDef[]} */
@@ -539,8 +547,6 @@ const enemies = [
 ];
 
 
-
-
 // World
 const g1 = 0.012;    // gravity in tiles/frame²
 const g2 = 0.018;    // gravity in tiles/frame²
@@ -619,6 +625,7 @@ let trade_heal_cost = 100; // multiply by 1.4 each time.
 
 let difficulty = 15;
 let difficulty_slope = 3;
+let dialog_seed = 0;
 
 let game_is_over = false;
 
@@ -626,6 +633,8 @@ let score_no_damage = true;
 let score_day = 0;
 let score_money = 0;
 let score_high_score = Number(localStorage.getItem('dicksonmd.RogueHoarder.HighScore'));
+/** @type {INpc[]} */
+let score_npcs = [{ n: 'Trader', t: 't', i: 0 }, { n: 'Friend1', t: 'f', i: 0 }];
 
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
@@ -636,6 +645,11 @@ const changeMap = (_new_map) => {
     map_w = map[0].length;  // map width in tiles
     map_h = map.length;     // map height in tiles
     entities = [];
+    dialog_seed = ~~(Math.random() * dialogPool.length);
+
+    //reset npc interactions
+    score_npcs.forEach((npc) => npc.i = 0);
+
     if (scene == 'd') {
         hero.x = 9;
         hero.y = 5;
@@ -651,6 +665,7 @@ const changeMap = (_new_map) => {
     const doorCandidates = [];
     const spikeCandidates = [];
     const spawnCandidates = [];
+    const npcCandidates = [];
 
     for (let y = 0; y < map_h; y++) {
         for (let x = 0; x < map_w; x++) {
@@ -667,8 +682,8 @@ const changeMap = (_new_map) => {
             if (tile == 'T') {
                 treasureCandidates.push({ x, y });
             }
-            if (tile == 't') {
-                entities.push({ type: 't', x: x + 0.3, y, w: 0.6, h: 1, fc: 1, vy: .1 });
+            if (tile == 'n') {
+                npcCandidates.push({ x, y });
             }
         }
     }
@@ -697,10 +712,18 @@ const changeMap = (_new_map) => {
     for (let i = 0; (scene == 'd' || score_day == 1) && spawnCandidates.length && i < treasureCount; i++) {
         const { x, y } = spawnCandidates.splice(~~(Math.random() * spawnCandidates.length), 1)[0];
         const rarity = randomFrom([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 4, 4, 4]);
-        const item = cards[(score_day == 1 && scene == 'h') ? 30 : randomFrom(rare[rarity])];
+        const itemID = (score_day == 1 && scene == 'h') ? 30 : randomFrom(rare[rarity]);
+        // console.log('itemID', rare, rarity, rare[rarity], itemID);
+        const item = cards[itemID];
         if (item.n == 'treasure') item.c = ~~(Math.pow(score_day, 1.5) * 100);
         entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1, vy: .1, item });
     }
+
+    score_npcs.forEach((npc) => {
+        if (!npcCandidates.length) return;
+        const { x, y } = npcCandidates.splice(~~(Math.random() * npcCandidates.length), 1)[0];
+        entities.push({ type: 'n', x: x + 0.3, y, w: 0.6, h: 1, fc: 1, vy: .1, npc });
+    });
 
     screen_transition_progress = 2000;
 };
@@ -825,12 +848,14 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
     /** @type {IEnemy} */
     let enemy;
     let score_difficulty = scene == 'h' ? 4 : difficulty;
+    const pool = [0, 0, 0, 1, 1];
+    if (score_difficulty > 30) pool.push(1, 2);
 
     for (let i = 0; spawnCandidates.length && score_difficulty > 0; i++) {
         const { x, y } = spawnCandidates[~~(Math.random() * spawnCandidates.length)];
 
         // const enemyDef = enemies[randomFrom([1, 0])];
-        const enemyDef = enemies[randomFrom([0, 0, 1, 1, 2])];
+        const enemyDef = enemies[randomFrom(pool)];
         const { w, h } = enemyDef;
         const sx = x + (1 - w) / 2;
         const sy = y + 1 - h - (enemyDef.b.includes('f') ? 1 : 0);
@@ -865,6 +890,7 @@ const spawnEnemy = (spawnCandidates, enemyCount) => {
         });
 
     }
+    console.log('spawnEnemy difficulty:', difficulty);
     console.log('spawnEnemy spawned:', result.length);
     return result;
 };
@@ -1009,9 +1035,22 @@ const flyToDestAtSpeed = (/** @type IEntity*/e) => {
     e.y += Math.sign(deltaY) * Math.min(Math.abs(deltaY), sp);
 }
 
-const randomFrom = (arr) => {
-    return arr[~~(Math.random() * arr.length)];
+const randomFromName = (name, dialog_seed) => {
+    return [...name].reduce((acc, c) => acc + c.charCodeAt(0), 0) + dialog_seed;
 };
+
+const randomFrom = (arr) => {
+    return shuffleArray(arr)[0];
+};
+
+const shuffleArray = (/** @type {Array} */ arr) => {
+    const result = [];
+    const a = arr.slice();
+    while (a.length) {
+        result.push(a.splice(~~(Math.random() * a.length), 1)[0]);
+    }
+    return result;
+}
 
 const addItem = (item) => {
     inventory.forEach(e => e.nw = 0);
@@ -1025,10 +1064,6 @@ const addItem = (item) => {
         updateInventoryList();
     }
 };
-
-const removeItem = (itemIndex) => {
-
-}
 
 
 const tryQuestionMark = (str) => (can_do_speech ? str : Array(str.length).fill('?').join(''));
@@ -1061,6 +1096,24 @@ const cache_map = (cache, cache_c, _map) => {
         }
     }));
 }
+
+const _did_you_know = 'Did you know, you can ';
+const small_talk = [
+    "Long time no see!",
+    "How is it going?",
+    "Don't overwork yourself",
+    "Good day",
+    "I used to be an adventurer like you",
+    "Got some'in interesting to sell?",
+    "Take care of yourself to go further",
+];
+const do_you_know = [
+    "Talking to friends and family may help you recover",
+    `${_did_you_know}sell potions to trader to recover health?`,
+    `${_did_you_know}hold Jump to jump higher?`,
+    `You can hold the down button to use your shield`,
+];
+const dialogPool = shuffleArray([...small_talk, ...small_talk, ...do_you_know]);
 
 // Inputs (see https://xem.github.io/articles/jsgamesinputs.html)
 const input = {
@@ -1122,6 +1175,10 @@ window.addEventListener('keyup', keyHandler);
 
 /* #IfDev */
 window['test'] = {
+
+    get randomFrom() { return randomFrom },
+    get shuffleArray() { return shuffleArray },
+    get frameID() { return frameID },
     get hero() { return hero },
     get entities() { return entities },
     get cards() { return cards },
@@ -1284,12 +1341,28 @@ setInterval(() => {
             hero_is_shielding = 0;
         }
 
-        const trader = entities.filter(e => e.type == 't')
+        const NPCs = entities.filter(e => e.type == 'n' && e.npc.i > -1);
+        const nearest_trader = NPCs
             .map(e => ({ ...e, dist: distance(displacement(e, hero)) }))
             .reduce((acc, e) => {
-                return e.dist < acc.dist ? e : acc;
-            }, { dist: Infinity });
-        trade_type = trader.dist < 1 ? 's' : '_';
+                return !acc || e.dist < acc.dist ? e : acc;
+            }, null);
+        if (nearest_trader && nearest_trader.dist < 1) {
+            const { npc } = nearest_trader;
+            const old_i = npc.i;
+            trade_type = npc.t;
+            NPCs.forEach(({ npc }) => npc.i = 0);
+            npc.i = old_i == 0 ? frameID + (npc.t == 't' ? 0 : 600) : old_i;
+        } else {
+            NPCs.forEach(({ npc }) => npc.i = 0);
+            trade_type = '_';
+        }
+        NPCs.forEach(({ npc }) => {
+            if (npc.t != 't' && npc.i > 0 && npc.i < frameID) {
+                console.log('npc action', npc);
+                npc.i = -1;
+            }
+        });
 
         // update entity
         // update other entities
@@ -1553,14 +1626,17 @@ setInterval(() => {
             $c.fillStyle = "black";
             $c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
         }
-        if (type == 't') {
+        if (type == 'n') {
+            const { i, n, t } = e.npc;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
+            const msg = t == 't' ? 'Press <Space> to trade' : dialogPool[randomFromName(n, dialog_seed) % dialogPool.length];
             $c.fillStyle = "#ffe";
             $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h * tile_h);
             $c.fillStyle = "#000";
             $c.textAlign = 'center';
-            $c.fillText(trade_type != '_' ? 'Press <Space>' : `Trade here`, cx * tile_w, (y - 0.2 - scroll_y - 0.3) * tile_h);
+
+            $c.fillText((i > 0 ? msg : n) /* + `(${i})` */, cx * tile_w, (y - 0.5 - scroll_y) * tile_h);
         }
         if (type == '3') {
             $c.fillStyle = "red";
