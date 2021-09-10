@@ -327,7 +327,7 @@ const cards = [
         c: 100,
     },
     {// 42
-        n: 'dash', // name
+        n: 'sprint', // name
         i: '🏃‍♂️',
         // rq: 5, // requires run
         c: 100,
@@ -577,7 +577,7 @@ let can_do_color = true;
 let can_do_speech = true;
 
 // skill
-let can_do_dash = false;
+let can_do_sprint = false;
 let can_do_climb = false;
 
 // items
@@ -605,17 +605,21 @@ let hero = { x: 10, y: 2, w: .6, h: 1, fc: 1, type: 'hero', vx: 0, vy: 0, gd: 1,
 let hero_g = g1;  // Y acceleration
 let hero_can_jump = 1;  // hero can jump (or jump again after Up key has been released)
 
-let hero_can_stab = 1;  // hero can stab
-let hero_is_stabbing = 0;  // hero stabbing
+let input_move_is_down = 0;  // flag for capturing double tap left or right
+let hero_can_sprint = 0;  // hero can sprint after this frame
+let hero_is_sprinting = 0;  // (bool) hero sprinting, aka running at high speed
 
-let hero_can_shoot = 0;  // hero can shoot magic
-let hero_is_shooting = 0;  // hero is shooting magic
+let hero_can_stab = 1;  // hero can stab after this frame
+let hero_is_stabbing = 0;  // hero stabbing before this frame
 
-let hero_is_shielding = 0;  // hero blocking with shield
+let hero_can_shoot = 0;  // hero can shoot magic after this frame
+let hero_is_shooting = 0;  // hero is shooting magic before this frame
+
+let hero_is_shielding = 0;  // (bool) hero blocking with shield
 let hero_tier = 3; // used to unlock health cards
 
 /** @type {Array<IItem>} */
-let inventory = [3, 0, 33, 0].map(i => (cards[i]));
+let inventory = [3, 42, 33, 0].map(i => (cards[i]));
 let lost_inventory = [];
 let inventory_size = inventory.length;
 /** @type {Array<IItem>} */
@@ -820,7 +824,7 @@ const updateAbilityList = () => {
     can_do_speech = (hero_tier >= 3 || inventory.some(card => card.n == 'speech'));
 
     // skill
-    can_do_dash = (inventory.some(card => card.n == 'dash'));
+    can_do_sprint = (inventory.some(card => card.n == 'sprint'));
     can_do_climb = (inventory.some(card => card.n == 'climb'));
 
     // items
@@ -1135,6 +1139,7 @@ const do_you_know = [
     `${_did_you_know}sell potions to trader to recover health`,
     `${_did_you_know}hold Jump to jump higher`,
     `${_did_you_know}hold the down button to use your shield`,
+    `${_did_you_know}double tap forward to sprint with your shoes`,
 ].map(a => 'Tips: ' + a);
 const dialogPool = shuffleArray([...small_talk, ...small_talk, ...do_you_know]);
 
@@ -1313,10 +1318,41 @@ setInterval(() => {
         // If left key is pressed, go left
         const mv = input.l ? -1 : input.r ? 1 : 0;
         const not_enough_strength = !can_do_armor && inventory.some(card => card.n == 'armor');
+        const run_slow = hero_is_shielding || !can_do_run || not_enough_strength;
+        if (!input_move_is_down && mv) {
+            if (hero_can_sprint == 0) {
+                hero_can_sprint = frameID + 30;
+                // console.log('down', frameID, hero_can_sprint);
+            } else if (hero_can_sprint > frameID) {
+                // console.log('dbl tap !!!');
+                hero_is_sprinting = 1;
+                hero_can_sprint = 0;
+            }
+            input_move_is_down = 1;
+        }
+        if (hero_can_sprint > 0 && hero_can_sprint <= frameID) {
+            // console.log('reset');
+            hero_can_sprint = 0;
+        }
+        if (input_move_is_down && !mv) {
+            // console.log('up', frameID);
+            input_move_is_down = 0;
+            hero_is_sprinting = 0;
+        }
+        // console.log('hero_can_sprint', input_move_is_down, hero_can_sprint, hero_is_sprinting);
+
         hero.fc = mv || hero.fc;
+        if (!run_slow && hero_is_sprinting && hero.gd > frameID && frameID % 8 == 0) spawnEffect({
+            x: hero.x + hero.w / 2,
+            y: hero.y + hero.h - 0.3,
+            w: 0.4,
+            h: 0.4,
+            fc: 1,
+            type: '',
+        }, '#aaa', 0.5);
         tryMoveX(
             hero,
-            mv * ((hero_is_shielding || !can_do_run || not_enough_strength) ? .05 : .1) + hero.vx,
+            mv * (run_slow ? .05 : hero_is_sprinting ? .2 : .1) + hero.vx,
             map,
             () => {
                 if (can_do_climb) {
