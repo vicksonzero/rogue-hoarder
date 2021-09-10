@@ -8,14 +8,18 @@ const pauseGame = () => {
         // console.log('pauseGame');
         screen_transition_progress = -1000;
         console.log('trade_type', trade_type);
-        $p.style.display = trade_type == '_' ? 'block' : 'none';
-        $t.style.display = trade_type == '_' ? 'none' : 'block';
+        $p.style.display = trade_type == 't' ? 'none' : 'block';
+        $t.style.display = trade_type == 't' ? 'block' : 'none';
         $h.style.display = 'none';
         $xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
         inventory.forEach(e => e.nw = 0);
         updateInventoryList();
     } else {
-        if (inventory.length > inventory_size) lost_inventory = [inventory.pop()];
+        if (inventory.length > inventory_size) {
+            const lostItem = inventory.pop();
+            handleLostAbilities(lostItem);
+            lost_inventory = [lostItem];
+        }
         screen_transition_progress = 0;
 
         updateAbilityList();
@@ -166,7 +170,7 @@ const cards = [
     },
     {// 2
         n: 'love', // name
-        i: '💓',
+        i: '❤️',
         // rq: 1, // requires live
     },
     {// 3
@@ -405,6 +409,7 @@ for (let i = 0; i < tiers.length; i++) {
  * @property {string} t    - type (f=friend, m=family, t=trader, d=doctor)
  * @property {number} i    - interaction (0=idle)
  * @property {string} n    - name for display
+ * @property {number} lv   - level or love
  */
 
 
@@ -613,6 +618,7 @@ let hero_tier = 3; // used to unlock health cards
 let inventory = [3, 0, 33, 0].map(i => (cards[i]));
 let lost_inventory = [];
 let inventory_size = inventory.length;
+/** @type {Array<IItem>} */
 let lostAbilities = [];
 
 // _ = no one near
@@ -634,7 +640,7 @@ let score_day = 0;
 let score_money = 0;
 let score_high_score = Number(localStorage.getItem('dicksonmd.RogueHoarder.HighScore'));
 /** @type {INpc[]} */
-let score_npcs = [{ n: 'Trader', t: 't', i: 0 }, { n: 'Friend1', t: 'f', i: 0 }];
+let score_npcs = [{ n: 'Trader', t: 't', i: 0, lv: 0.2 }, { n: 'Friend1', t: 'f', i: 0, lv: 0.2 }];
 
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
@@ -647,8 +653,6 @@ const changeMap = (_new_map) => {
     entities = [];
     dialog_seed = ~~(Math.random() * dialogPool.length);
 
-    //reset npc interactions
-    score_npcs.forEach((npc) => npc.i = 0);
 
     if (scene == 'd') {
         hero.x = 9;
@@ -657,6 +661,11 @@ const changeMap = (_new_map) => {
         score_day++;
         if (score_no_damage) difficulty_slope += 1.5;
         difficulty += difficulty_slope;
+        //reset npc interactions
+        score_npcs.forEach((npc) => {
+            npc.i = 0;
+            npc.lv += (1 - npc.lv) * 0.05;
+        });
         hero.x = 3;
         hero.y = 7;
     }
@@ -719,11 +728,13 @@ const changeMap = (_new_map) => {
         entities.push({ type: 'T', x: x + 0.3, y: y + 0.4, w: 0.6, h: 0.6, fc: 1, vy: .1, item });
     }
 
-    score_npcs.forEach((npc) => {
-        if (!npcCandidates.length) return;
-        const { x, y } = npcCandidates.splice(~~(Math.random() * npcCandidates.length), 1)[0];
-        entities.push({ type: 'n', x: x + 0.3, y, w: 0.6, h: 1, fc: 1, vy: .1, npc });
-    });
+    if (scene == 'h' && score_day > 1) {
+        score_npcs.forEach((npc) => {
+            if (!npcCandidates.length) return;
+            const { x, y } = npcCandidates.splice(~~(Math.random() * npcCandidates.length), 1)[0];
+            entities.push({ type: 'n', x: x + 0.3, y, w: 0.6, h: 1, fc: 1, vy: .1, npc });
+        });
+    }
 
     screen_transition_progress = 2000;
 };
@@ -748,7 +759,7 @@ const updateInventoryList = () => {
     );
 
     $tList.innerHTML = (inventory.slice(0, inventory_size)
-        .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="trade('s',${_i})"><i>${i}</i>${n}</div><p>${n == 'potion' ? '💓' : c ? c + 'z' : '--'}</p></div>`)
+        .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="trade('s',${_i})"><i>${i}</i>${n}</div><p>${n == 'potion' ? '❤️' : c ? c + 'z' : '--'}</p></div>`)
         .join('')
     );
     $tList.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
@@ -760,6 +771,13 @@ const updateInventoryList = () => {
     $m.innerHTML = `💰 ${score_money}z`;
     // reset inventory animation
     lost_inventory = [];
+};
+
+const handleLostAbilities = (lostItem) => {
+    console.log('lost item', lostItem.n, cards.findIndex(item => item.n == lostItem.n));
+    if (lostItem.n != '' && cards.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
+        lostAbilities.push(lostItem);
+    }
 };
 
 const updateAbilityList = () => {
@@ -912,10 +930,7 @@ const takeDamage = () => {
     const lostIndex = (lastArmorIndex > -1 ? inventory.length - lastArmorIndex : inventory.length) - 1;
     // console.log('lostIndex', lostIndex);
     const lostItem = inventory[lostIndex];
-    console.log('lost item', lostItem.n, cards.findIndex(item => item.n == lostItem.n));
-    if (lostItem.n != '' && cards.findIndex(item => item.n == lostItem.n) < 30) { // is body ability
-        lostAbilities.push(lostItem);
-    }
+    handleLostAbilities(lostItem);
     lost_inventory = [lostItem];
     if (lostItem.n == 'armor') {
         inventory.splice(lostIndex, 1, { n: '', i: '', rq: 1 });
@@ -931,6 +946,14 @@ const takeDamage = () => {
     updateAbilityList();
     updateInventoryList();
 };
+
+
+const tryHeal = (/** @type {INpc}*/ fromNPC) => {
+    if (!lostAbilities.length) return 0;
+    if (Math.random() > fromNPC.lv) return 0;
+    addItem(lostAbilities.splice(~~(Math.random() * lostAbilities.length), 1)[0]);
+    return 1;
+}
 
 const knockBack = (/** @type {IEntity}*/attacker, /** @type {IEntity}*/defender) => {
     const disp = displacement(defender, attacker);
@@ -1052,7 +1075,7 @@ const shuffleArray = (/** @type {Array} */ arr) => {
     return result;
 }
 
-const addItem = (item) => {
+const addItem = (/** @type {IItem} */ item) => {
     inventory.forEach(e => e.nw = 0);
     const id = inventory.findIndex(item => item.n == '');
     if (id < 0) {
@@ -1097,7 +1120,7 @@ const cache_map = (cache, cache_c, _map) => {
     }));
 }
 
-const _did_you_know = 'Did you know, you can ';
+const _did_you_know = 'You can ';
 const small_talk = [
     "Long time no see!",
     "How is it going?",
@@ -1108,11 +1131,11 @@ const small_talk = [
     "Take care of yourself to go further",
 ];
 const do_you_know = [
-    "Talking to friends and family may help you recover",
-    `${_did_you_know}sell potions to trader to recover health?`,
-    `${_did_you_know}hold Jump to jump higher?`,
-    `You can hold the down button to use your shield`,
-];
+    "Spending time with friends and family is good",
+    `${_did_you_know}sell potions to trader to recover health`,
+    `${_did_you_know}hold Jump to jump higher`,
+    `${_did_you_know}hold the down button to use your shield`,
+].map(a => 'Tips: ' + a);
 const dialogPool = shuffleArray([...small_talk, ...small_talk, ...do_you_know]);
 
 // Inputs (see https://xem.github.io/articles/jsgamesinputs.html)
@@ -1176,6 +1199,7 @@ window.addEventListener('keyup', keyHandler);
 /* #IfDev */
 window['test'] = {
 
+    get score_npcs() { return score_npcs },
     get randomFrom() { return randomFrom },
     get shuffleArray() { return shuffleArray },
     get frameID() { return frameID },
@@ -1227,7 +1251,7 @@ window['trade'] = (type, itemIndex) => {
             lostAbilities.push(lostItem);
         }
         lost_inventory = [lostItem];
-        score_money += lostItem.c;
+        score_money += lostItem.c + lostItem.n != 'treasure' ? 0 : ~~(Math.random() * lostItem.c * 0.5);
         inventory.splice(itemIndex, 1, { n: '', i: '', rq: 1 });
     }
     updateAbilityList();
@@ -1352,7 +1376,7 @@ setInterval(() => {
             const old_i = npc.i;
             trade_type = npc.t;
             NPCs.forEach(({ npc }) => npc.i = 0);
-            npc.i = old_i == 0 ? frameID + (npc.t == 't' ? 0 : 600) : old_i;
+            npc.i = old_i == 0 ? frameID + (npc.t == 't' ? 0 : 300) : old_i;
         } else {
             NPCs.forEach(({ npc }) => npc.i = 0);
             trade_type = '_';
@@ -1360,7 +1384,21 @@ setInterval(() => {
         NPCs.forEach(({ npc }) => {
             if (npc.t != 't' && npc.i > 0 && npc.i < frameID) {
                 console.log('npc action', npc);
-                npc.i = -1;
+
+                inventory.forEach(e => e.nw = 0);
+                const flowerIndex = inventory.findIndex(card => card.n == 'flower');
+                console.log('flowerIndex', flowerIndex);
+                if (flowerIndex > -1) {
+                    // console.log('lostIndex', lostIndex);
+                    const lostItem = inventory[flowerIndex];
+                    inventory.splice(flowerIndex, 1, { n: '', i: '', rq: 1 });
+                    lost_inventory = [lostItem];
+                }
+                npc.lv += (1 - npc.lv) * (flowerIndex > -1 ? 0.2 : 0.1);
+
+                npc.i = tryHeal(npc) ? -2 : -1;
+                updateAbilityList();
+                updateInventoryList();
             }
         });
 
@@ -1636,7 +1674,7 @@ setInterval(() => {
             $c.fillStyle = "#000";
             $c.textAlign = 'center';
 
-            $c.fillText((i > 0 ? msg : n) /* + `(${i})` */, cx * tile_w, (y - 0.5 - scroll_y) * tile_h);
+            $c.fillText((i > 0 ? msg : i < -1 ? 'Here, take this with you.' : n) + (i < 0 ? '❤️' : '') /* + `(${i})` */, cx * tile_w, (y - 0.5 - scroll_y) * tile_h);
         }
         if (type == '3') {
             $c.fillStyle = "red";
@@ -1769,7 +1807,7 @@ setInterval(() => {
         );
     }
 
-    if (scene == 'h' && score_day < 3) {
+    if (scene == 'h' && score_day < 2) {
         $c.textAlign = 'left';
         $c.fillStyle = "black";
         $c.fillText(`← Your Inventory Space is also your HP.`, (3 - scroll_x) * tile_w, (4 - scroll_y) * tile_h);
