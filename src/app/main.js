@@ -949,7 +949,10 @@ const shootMagic = (c, s, attacker, defender) => {
         type: 'M', // magic
         vx: defender ? disp[0] / dist * .1 : (attacker.fc * .2),
         vy: defender ? disp[1] / dist * .1 : 0,
-        m: { c, s },
+        m: {
+            c,// color
+            s,// style, m=magic, s=bee-sting
+        },
     });
 }
 
