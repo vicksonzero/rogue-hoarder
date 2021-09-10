@@ -1358,7 +1358,7 @@ setInterval(() => {
                                 if (disp[0] < 3) {
                                     enemy.dx = hero.x;
                                     if (e.gd) {
-                                        e.vy = enemy.b.includes('l') ? -.32 : -.18;
+                                        e.vy = enemy.b.includes('l') ? -.25 : -0.1;
                                         e.gd = 0;
                                     }
                                 }
@@ -1419,6 +1419,7 @@ setInterval(() => {
                     // set facing depending on walk direction
                     e.fc = dx == x ? e.fc : Math.sign(dx - x);
 
+                    if (e.gd && map[~~y][~~(x + w / 2 + e.fc * w)] == '1') { e.vy = -0.18; e.gd = 0; }
                     // calculate x movement needed
                     const deltaX = Math.sign(dx - x) * Math.min(Math.abs(dx - x), sp) + e.vx;
 
