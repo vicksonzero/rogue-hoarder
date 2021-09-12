@@ -1139,7 +1139,7 @@ const cache_map = (cache, cache_c, _map) => {
             cache_c.fillRect(x * tile_w, y * tile_h, tile_w, tile_h);
 
             if (y > 1 && _map[y - 1][x] != '1') {
-                cache_c.fillStyle = "#161";
+                cache_c.fillStyle = "#454";
                 cache_c.fillRect(x * tile_w, y * tile_h, tile_w, 8);
             }
         }
