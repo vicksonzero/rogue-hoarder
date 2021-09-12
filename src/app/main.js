@@ -31,6 +31,7 @@ const pauseGame = () => {
     }
 };
 
+
 // Canvas
 const $a = document.querySelector("canvas");
 /** @type HTMLDivElement */
@@ -132,6 +133,19 @@ const map_home = [
     "1100000000000000000000000000000000000000000000",
     "11000000000000020000111300wwwwwwwwww000000000D",
     "1111111111111111111111111111111111111111111111",
+];
+const names = [
+    'James',
+    'John',
+    'William',
+    'Thomas',
+    'Daniel',
+
+    'Sarah',
+    'Jessica',
+    'Michelle',
+    'Amanda',
+    'Sharon',
 ];
 
 
@@ -644,7 +658,7 @@ let score_day = 0;
 let score_money = 0;
 let score_high_score = Number(localStorage.getItem('dicksonmd.RogueHoarder.HighScore'));
 /** @type {INpc[]} */
-let score_npcs = [{ n: 'Trader', t: 't', i: 0, lv: 0.1 }, { n: 'Friend1', t: 'f', i: 0, lv: 0.1 }];
+let score_npcs = [{ n: 'Trader', t: 't', i: 0, lv: 0.1 }];
 
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
@@ -665,6 +679,14 @@ const changeMap = (_new_map) => {
         score_day++;
         if (score_no_damage) difficulty_slope += 1.5;
         difficulty += difficulty_slope;
+        // make new friend
+        if (names.length && (score_day == 2 || Math.random() < 0.3)) {
+            // console.log('new friend');
+            score_npcs.push({
+                n: names.splice(~~(Math.random() * names.length), 1)[0],
+                t: 'f', i: 0, lv: 0
+            })
+        }
         //reset npc interactions
         score_npcs.forEach((npc) => {
             npc.i = 0;
@@ -1139,7 +1161,7 @@ const small_talk = [
     "Take care of yourself to go further",
 ];
 const do_you_know = [
-    "Spending time with friends and family is good",
+    "Spending time with friends help you recover",
     `${_did_you_know}sell potions to trader to recover health`,
     `${_did_you_know}hold Jump to jump higher`,
     `${_did_you_know}hold the down button to use your shield`,
@@ -1735,7 +1757,10 @@ setInterval(() => {
             $c.fillStyle = "#000";
             $c.textAlign = 'center';
 
-            $c.fillText((i > 0 ? msg : i < -1 ? tryQuestionMark('Here, take this with you.') : n), cx * tile_w, (y - 0.7 - scroll_y) * tile_h);
+            if (trade_type == '_' || i > 0) {
+                $c.fillText((i > 0 ? msg : i < -1 ? tryQuestionMark('Here, take this with you.') : n), cx * tile_w, (y - 0.7 - scroll_y) * tile_h);
+
+            }
 
             if (i <= 0 || lv < 1 || ~~(frameID / 30) % 2) {
                 $c.fillText(t == 't' ? '' : [...Array(Math.min(5, ~~(lv * 5) + (i > 0 ? ~~(frameID / 30) % 2 * (hasFlower ? 2 : 1) : 0)))].fill('❤️').join('') /* + `(${i})` */, cx * tile_w, (y - 0.3 - scroll_y) * tile_h);
