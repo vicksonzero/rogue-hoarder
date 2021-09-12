@@ -664,6 +664,10 @@ let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
 
 const changeMap = (_new_map) => {
+    if (score_day >= 30) {
+        gameOver();
+        return;
+    }
     scene = _new_map;
     map = (scene == 'h' ? map_home : map_dungeon);
     map_w = map[0].length;  // map width in tiles
@@ -1161,11 +1165,12 @@ const small_talk = [
     "Take care of yourself to go further",
 ];
 const do_you_know = [
-    "Spending time with friends help you recover",
-    `${_did_you_know}sell potions to trader to recover health`,
-    `${_did_you_know}hold Jump to jump higher`,
-    `${_did_you_know}hold the down button to use your shield`,
-    `${_did_you_know}double tap forward to sprint with your shoes`,
+    `${_did_you_know}Sell treasure to the trader to get score`,
+    `${_did_you_know}Spending time with friends help you recover`,
+    `${_did_you_know}Sell potions to trader to recover health`,
+    `${_did_you_know}Hold Jump to jump higher`,
+    `${_did_you_know}Hold the down button to use your shield`,
+    `${_did_you_know}Double tap forward to sprint with your shoes`,
 ].map(a => 'Tips: ' + a);
 const dialogPool = shuffleArray([...small_talk, ...small_talk, ...do_you_know]);
 
