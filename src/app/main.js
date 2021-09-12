@@ -1585,6 +1585,8 @@ setInterval(() => {
                         if (shootyCollisionIndex < entityIndex) entityIndex--;
                     }
                     if (e.enemy.hp <= 0) {
+                        score_money += e.enemy.d * 5;
+                        updateInventoryList();
                         spawnEffect(e, '#b3e', 2, 0);
                         spawnEffect(e, '#888', 2.5);
                         entities.splice(entityIndex, 1);
