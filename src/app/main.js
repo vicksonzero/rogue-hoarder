@@ -684,7 +684,7 @@ const changeMap = (_new_map) => {
         if (score_no_damage) difficulty_slope += 1.5;
         difficulty += difficulty_slope;
         // make new friend
-        if (score_npcs.length < 4 && (score_day == 2 || Math.random() < 0.3)) {
+        if (score_npcs.length < 4 && (score_day == 2 || Math.random() < 0.2)) {
             // console.log('new friend');
             score_npcs.push({
                 n: names.splice(~~(Math.random() * names.length), 1)[0],
@@ -696,7 +696,7 @@ const changeMap = (_new_map) => {
             npc.i = 0;
             npc.lv += 0.1;
         });
-        hero.x = 3;
+        hero.x = 4;
         hero.y = 7;
     }
 
@@ -773,8 +773,9 @@ const changeMap = (_new_map) => {
 const gameOver = () => {
     game_is_over = true;
     score_high_score = Math.max(score_money, score_high_score);
+    const sec = frameID * 16 / 1000;
     localStorage.setItem('dicksonmd.RogueHoarder.HighScore', "" + score_high_score);
-    $end.innerHTML = `<div><h1>Game Over</h1><p>You have survived ${score_day - 1} nights,<br>and gained ${score_money}pts</p><p>At the cost of ${lostAbilities.map(a => a.i).join(', ')}</p><p>High score: ${score_high_score}pts</p><p>&lt;Refresh the webpage to restart&gt;</p></div>`;
+    $end.innerHTML = `<div><h1>Game Over</h1><p>You have survived ${score_day - 1} nights,<br>and gained ${score_money}pts</p><p>At the cost of ${lostAbilities.map(a => a.i).join(', ')}</p><p>Play time: ${~~(sec / 60)}:${~~(sec % 60)}<br>High score: ${score_high_score}</p><p>&lt;Refresh the webpage to restart&gt;</p></div>`;
 
     $end.style.display = 'flex';
 }
@@ -799,7 +800,7 @@ const updateInventoryList = () => {
     $h.innerHTML = inventory.map(({ i, t, nw, hd }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}  ${hd ? 'hd' : ''}" data-c=${_i}><i>${i}</i></div>`).join('');
     $h.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
 
-    $m.innerHTML = `Score: ${score_money}pts`;
+    $m.innerHTML = `Score: ${score_money}`;
     // reset inventory animation
     lost_inventory = [];
 };
@@ -984,7 +985,7 @@ const takeDamage = () => {
 
 const tryHeal = (/** @type {INpc}*/ fromNPC) => {
     if (!lostAbilities.length) return 0;
-    if (Math.random() > fromNPC.lv) return 0;
+    if (Math.random() > Math.min(1, fromNPC.lv) * 0.8) return 0;
     addItem(lostAbilities.splice(~~(Math.random() * lostAbilities.length), 1)[0]);
     return 1;
 }
@@ -1171,7 +1172,7 @@ const do_you_know = [
     `${_did_you_know}Hold Jump to jump higher`,
     `${_did_you_know}Hold the down button to use your shield`,
     `${_did_you_know}Double tap forward to sprint with your shoes`,
-].map(a => 'Tips: ' + a);
+].map(a => 'Tips: ');
 const dialogPool = shuffleArray([...small_talk, ...small_talk, ...do_you_know]);
 
 // Inputs (see https://xem.github.io/articles/jsgamesinputs.html)
@@ -1590,6 +1591,7 @@ setInterval(() => {
                         if (shootyCollisionIndex < entityIndex) entityIndex--;
                     }
                     if (e.enemy.hp <= 0) {
+                        inventory.forEach(e => e.nw = 0);
                         score_money += e.enemy.d * 5;
                         updateInventoryList();
                         spawnEffect(e, '#b3e', 2, 0);
@@ -1938,7 +1940,7 @@ setInterval(() => {
         $c.fillText(`Press <Space> to rearrange your life priorities`, (35 - scroll_x) * tile_w, (8 - scroll_y) * tile_h);
         $c.textAlign = 'center';
         $c.fillText(`By vicksonzero`, (7.5 - scroll_x) * tile_w, (8.5 - scroll_y) * tile_h);
-        $c.fillText(`High Score: ${score_high_score}pts`, (7.5 - scroll_x) * tile_w, (9.5 - scroll_y) * tile_h);
+        $c.fillText(`High Score: ${score_high_score}`, (7.5 - scroll_x) * tile_w, (9.5 - scroll_y) * tile_h);
         $c.fillText(`Press ${['WASD', 'ZQSD', '↑←↓→'][~~(frameID / 150) % 3]} to move and jump`, (7.5 - scroll_x) * tile_w, (11 - scroll_y) * tile_h);
         $c.font = $c.font.replace(/\d+px/, "48px");
         $c.fillText(`Rogue-Hoarder`, (7.5 - scroll_x) * tile_w, (8 - scroll_y) * tile_h);
