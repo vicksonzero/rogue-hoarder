@@ -680,7 +680,7 @@ const changeMap = (_new_map) => {
         if (score_no_damage) difficulty_slope += 1.5;
         difficulty += difficulty_slope;
         // make new friend
-        if (names.length && (score_day == 2 || Math.random() < 0.3)) {
+        if (score_npcs.length < 4 && (score_day == 2 || Math.random() < 0.3)) {
             // console.log('new friend');
             score_npcs.push({
                 n: names.splice(~~(Math.random() * names.length), 1)[0],
