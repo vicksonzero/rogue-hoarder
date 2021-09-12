@@ -644,7 +644,7 @@ let score_day = 0;
 let score_money = 0;
 let score_high_score = Number(localStorage.getItem('dicksonmd.RogueHoarder.HighScore'));
 /** @type {INpc[]} */
-let score_npcs = [{ n: 'Trader', t: 't', i: 0, lv: 0.2 }, { n: 'Friend1', t: 'f', i: 0, lv: 0.2 }];
+let score_npcs = [{ n: 'Trader', t: 't', i: 0, lv: 0.1 }, { n: 'Friend1', t: 'f', i: 0, lv: 0.1 }];
 
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
@@ -668,7 +668,7 @@ const changeMap = (_new_map) => {
         //reset npc interactions
         score_npcs.forEach((npc) => {
             npc.i = 0;
-            npc.lv += (1 - npc.lv) * 0.05;
+            npc.lv += 0.1;
         });
         hero.x = 3;
         hero.y = 7;
@@ -1431,13 +1431,14 @@ setInterval(() => {
                 inventory.forEach(e => e.nw = 0);
                 const flowerIndex = inventory.findIndex(card => card.n == 'flower');
                 console.log('flowerIndex', flowerIndex);
-                if (flowerIndex > -1) {
+                if (npc.lv < 1 && flowerIndex > -1) {
                     // console.log('lostIndex', lostIndex);
                     const lostItem = inventory[flowerIndex];
                     inventory.splice(flowerIndex, 1, { n: '', i: '', rq: 1 });
                     lost_inventory = [lostItem];
+                    npc.lv += 0.2;
                 }
-                npc.lv += (1 - npc.lv) * (flowerIndex > -1 ? 0.2 : 0.1);
+                npc.lv += 0.2;
 
                 npc.i = tryHeal(npc) ? -2 : -1;
                 updateAbilityList();
@@ -1708,10 +1709,11 @@ setInterval(() => {
             $c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
         }
         if (type == 'n') {
-            const { i, n, t } = e.npc;
+            const { i, n, t, lv } = e.npc;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
             const msg = t == 't' ? 'Press <Space> to trade' : tryQuestionMark(dialogPool[randomFromName(n, dialog_seed) % dialogPool.length]);
+            const hasFlower = inventory.some(card => card.n == 'flower');
             $c.fillStyle = "#ffe";
 
             $c.fillStyle = "gold";
@@ -1733,7 +1735,11 @@ setInterval(() => {
             $c.fillStyle = "#000";
             $c.textAlign = 'center';
 
-            $c.fillText((i > 0 ? msg : i < -1 ? tryQuestionMark('Here, take this with you.') : n) + (i < 0 ? '❤️' : '') /* + `(${i})` */, cx * tile_w, (y - 0.5 - scroll_y) * tile_h);
+            $c.fillText((i > 0 ? msg : i < -1 ? tryQuestionMark('Here, take this with you.') : n), cx * tile_w, (y - 0.7 - scroll_y) * tile_h);
+
+            if (i <= 0 || lv < 1 || ~~(frameID / 30) % 2) {
+                $c.fillText(t == 't' ? '' : [...Array(Math.min(5, ~~(lv * 5) + (i > 0 ? ~~(frameID / 30) % 2 * (hasFlower ? 2 : 1) : 0)))].fill('❤️').join('') /* + `(${i})` */, cx * tile_w, (y - 0.3 - scroll_y) * tile_h);
+            }
         }
         if (type == '3') {
             $c.fillStyle = "red";
