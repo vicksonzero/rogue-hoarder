@@ -41,6 +41,7 @@ body {
 #p,
 #t,
 #m,
+#td,
 #end {
   position: absolute;
   width: 100%;
@@ -65,18 +66,20 @@ body {
   background: rgba(0, 0, 0, 0.5);
   text-align: right;
 }
-#excess-note {
+#ex-note {
   display: none;
   color: gold;
 }
 #list,
-#tList {
+#tList,
+#dList {
   display: flex;
   flex-direction: row;
   align-items: center;
   flex-flow: wrap;
 }
-#tList > div {
+#tList > div,
+#dList > div {
   font-size: 13px;
   text-align: center;
 }
@@ -94,6 +97,9 @@ body {
   justify-content: center;
   user-select: none;
   box-sizing: border-box;
+}
+#hBtn{
+  width: 100px;
 }
 .card.hd {
   border: 3px black solid;

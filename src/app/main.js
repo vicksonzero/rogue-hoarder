@@ -8,8 +8,9 @@ const pauseGame = () => {
         // console.log('pauseGame');
         screen_transition_progress = -1000;
         console.log('trade_type', trade_type);
-        $p.style.display = trade_type == 't' ? 'none' : 'block';
+        $p.style.display = trade_type == '_' || trade_type == 'f' ? 'block' : 'none';
         $t.style.display = trade_type == 't' ? 'block' : 'none';
+        $td.style.display = trade_type == 'd' ? 'block' : 'none';
         $h.style.display = 'none';
         $xn.style.display = inventory.length == inventory_size ? 'none' : 'block';
         inventory.forEach(e => e.nw = 0);
@@ -26,6 +27,7 @@ const pauseGame = () => {
         updateInventoryList();
         $p.style.display = 'none';
         $t.style.display = 'none';
+        $td.style.display = 'none';
 
         $h.style.display = 'flex';
     }
@@ -40,11 +42,15 @@ const $h = document.querySelector("#h");
 const $m = document.querySelector("#m");
 
 /** @type HTMLDivElement */
-const $xn = document.querySelector("#excess-note");
+const $xn = document.querySelector("#ex-note");
 /** @type HTMLDivElement */
 const $t = document.querySelector("#t");
 /** @type HTMLDivElement */
 const $tList = document.querySelector("#tList");
+/** @type HTMLDivElement */
+const $td = document.querySelector("#td");
+/** @type HTMLDivElement */
+const $dList = document.querySelector("#dList");
 /** @type HTMLDivElement */
 const $l = document.querySelector("#list");
 /** @type HTMLDivElement */
@@ -54,6 +60,7 @@ const $end = document.querySelector("#end");
 const $c = $a.getContext("2d");
 $p.style.display = 'none';
 $t.style.display = 'none';
+$td.style.display = 'none';
 $end.style.display = 'none';
 $c.imageSmoothingEnabled = false;
 $h.onclick = pauseGame;
@@ -432,7 +439,7 @@ for (let i = 0; i < tiers.length; i++) {
 
 /**
  * @typedef INpc
- * @property {string} t    - type (f=friend, m=family, t=trader, d=doctor)
+ * @property {string} t    - trade type (f=friend, m=family, t=trader, d=doctor)
  * @property {number} i    - interaction (0=idle)
  * @property {string} n    - name for display
  * @property {number} lv   - level or love
@@ -676,7 +683,12 @@ let score_npcs = [
         n: 'Trader',
         t: 't', i: 0, lv: 0.1,
         c: npc_colors.splice(~~(Math.random() * npc_colors.length), 1)[0],
-    }
+    },
+    {
+        n: 'Witch Doctor',
+        t: 'd', i: 0, lv: 0.1,
+        c: '#333',
+    },
 ];
 
 let scroll_x = 0; // X scroll in tiles
@@ -811,10 +823,17 @@ const updateInventoryList = () => {
     );
 
     $tList.innerHTML = (inventory.slice(0, inventory_size)
-        .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="trade('s',${_i})"><i>${i}</i>${n}</div><p>${n == 'potion' ? '❤️' : c ? c + 'z' : '--'}</p></div>`)
+        .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i} onclick="trade('s',${_i})"><i>${i}</i>${n}</div><p>${c ? c + 'pts' : '--'}</p></div>`)
         .join('')
     );
     $tList.innerHTML += lost_inventory.map(({ i, t, nw }, _i) => `<div class="card c-${t} out" data-c=${_i}><i>${i}</i></div>`).join('');
+
+
+    $dList.innerHTML = (inventory.slice(0, inventory_size)
+        .map(({ n, i, t, nw, hd, c }, _i) => `<div><div class="card c-${t} ${hd ? 'hd' : ''}" data-c=${_i}><i>${i}</i>${n}</div></div>`)
+        .join('')
+    );
+    document.querySelector('#hBtn span').innerHTML = trade_heal_cost + 'pts';
 
     // health bar
     $h.innerHTML = inventory.map(({ i, t, nw, hd }, _i) => `<div class="card c-${t} ${nw ? 'in' : ''}  ${hd ? 'hd' : ''}" data-c=${_i}><i>${i}</i></div>`).join('');
@@ -1296,11 +1315,11 @@ window['trade'] = (type, itemIndex) => {
     console.log('trade', type, item);
 
     if (type == 's') {
-        if (item.n == 'potion') {
-            inventory.push({ n: '', i: '', rq: 1, nw: 1 });
-            inventory_size = inventory.length;
-        }
-        else if (!item.c) {
+        // if (item.n == 'potion') {
+        //     inventory.push({ n: '', i: '', rq: 1, nw: 1 });
+        //     inventory_size = inventory.length;
+        // } else 
+        if (!item.c) {
             return;
         }
 
@@ -1311,6 +1330,14 @@ window['trade'] = (type, itemIndex) => {
         lost_inventory = [lostItem];
         score_money += lostItem.c + (lostItem.n != 'treasure' ? 0 : ~~(Math.random() * lostItem.c * 0.5));
         inventory.splice(itemIndex, 1, { n: '', i: '', rq: 1 });
+    }
+    if (type == 'd') { // doctor
+        if (score_money < trade_heal_cost) return;
+
+        inventory.push({ n: '', i: '', rq: 1, nw: 1 });
+        inventory_size = inventory.length;
+        score_money -= trade_heal_cost;
+        trade_heal_cost = ~~(trade_heal_cost * 1.5);
     }
     updateAbilityList();
     updateInventoryList();
@@ -1465,7 +1492,7 @@ setInterval(() => {
             const old_i = npc.i;
             trade_type = npc.t;
             NPCs.forEach(({ npc }) => npc.i = 0);
-            npc.i = old_i == 0 ? frameID + (npc.t == 't' ? 0 : 300) : old_i;
+            npc.i = old_i == 0 ? frameID + (npc.t == 't' || npc.t == 'd' ? 0 : 300) : old_i;
         } else {
             NPCs.forEach(({ npc }) => npc.i = 0);
             trade_type = '_';
@@ -1473,7 +1500,7 @@ setInterval(() => {
         NPCs.forEach((e) => {
             const { npc } = e;
             e.fc = (hero.x > e.x ? 1 : -1);
-            if (npc.t != 't' && npc.i > 0 && npc.i < frameID) {
+            if (npc.t != 't' && npc.t != 'd' && npc.i > 0 && npc.i < frameID) {
                 console.log('npc action', npc);
 
                 inventory.forEach(e => e.nw = 0);
@@ -1763,7 +1790,7 @@ setInterval(() => {
             const { i, n, t, lv, c } = e.npc;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
-            const msg = t == 't' ? 'Press <Space> to trade' : tryQuestionMark(dialogPool[randomFromName(n, dialog_seed) % dialogPool.length]);
+            const msg = t == 't' || t == 'd' ? 'Press <Space> to trade' : tryQuestionMark(dialogPool[randomFromName(n, dialog_seed) % dialogPool.length]);
             const hasFlower = inventory.some(card => card.n == 'flower');
             $c.fillStyle = "#ffe";
 
@@ -1792,7 +1819,7 @@ setInterval(() => {
             }
 
             if (i <= 0 || lv < 1 || ~~(frameID / 30) % 2) {
-                $c.fillText(t == 't' ? '' : [...Array(Math.min(5, ~~(lv * 5) + (i > 0 ? ~~(frameID / 30) % 2 * (hasFlower ? 2 : 1) : 0)))].fill('❤️').join('') /* + `(${i})` */, cx * tile_w, (y - 0.3 - scroll_y) * tile_h);
+                $c.fillText(t == 't' || t == 'd' ? '' : [...Array(Math.min(5, ~~(lv * 5) + (i > 0 ? ~~(frameID / 30) % 2 * (hasFlower ? 2 : 1) : 0)))].fill('❤️').join('') /* + `(${i})` */, cx * tile_w, (y - 0.3 - scroll_y) * tile_h);
             }
         }
         if (type == '3') {
