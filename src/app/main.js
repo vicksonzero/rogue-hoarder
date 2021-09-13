@@ -1205,12 +1205,13 @@ const small_talk = [
     "Take care of yourself to go further"
 ];
 const do_you_know = [
-    `${_did_you_know}Sell treasure to the trader to get score`,
-    `${_did_you_know}Spending time with friends help you recover`,
-    `${_did_you_know}Sell potions to trader to recover health`,
-    `${_did_you_know}Hold Jump to jump higher`,
-    `${_did_you_know}Hold the down button to use your shield`,
-    `${_did_you_know}Double tap forward to sprint with your shoes`
+    `Spending time with friends help you recover`,
+    `Potions cannot no longer heal you`,
+    `${_did_you_know}sell treasure to the trader to get score`,
+    `${_did_you_know}visit the Witch Doctor to recover health`,
+    `${_did_you_know}hold Jump to jump higher`,
+    `${_did_you_know}hold the down button to use your shield`,
+    `${_did_you_know}double tap forward to sprint with your shoes`
 ].map(a => 'Tips: ' + a);
 const dialogPool = shuffleArray([...small_talk, ...small_talk, ...do_you_know]);
 
