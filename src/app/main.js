@@ -134,7 +134,7 @@ const map_home = [
     '11100000000n0002n000111300wwwwwwnwww000000000D',
     '1111111111111111111111111111111111111111111111',
 ];
-const names = [
+const npc_names = [
     'James',
     'John',
     'William',
@@ -146,6 +146,18 @@ const names = [
     'Michelle',
     'Amanda',
     'Sharon',
+];
+const npc_colors = [
+    '#FF7',
+    '#247',
+    '#19F',
+    '#F67',
+    '#0DA',
+    '#A17',
+    '#AEF',
+    '#8AA',
+    '#322',
+    '#996',
 ];
 
 
@@ -424,6 +436,7 @@ for (let i = 0; i < tiers.length; i++) {
  * @property {number} i    - interaction (0=idle)
  * @property {string} n    - name for display
  * @property {number} lv   - level or love
+ * @property {string} c    - color of clothes
  */
 
 
@@ -658,7 +671,13 @@ let score_day = 0;
 let score_money = 0;
 let score_high_score = Number(localStorage.getItem('dicksonmd.RogueHoarder.HighScore'));
 /** @type {INpc[]} */
-let score_npcs = [{ n: 'Trader', t: 't', i: 0, lv: 0.1 }];
+let score_npcs = [
+    {
+        n: 'Trader',
+        t: 't', i: 0, lv: 0.1,
+        c: npc_colors.splice(~~(Math.random() * npc_colors.length), 1)[0],
+    }
+];
 
 let scroll_x = 0; // X scroll in tiles
 let scroll_y = 0; // X scroll in tiles
@@ -687,8 +706,9 @@ const changeMap = (_new_map) => {
         if (score_npcs.length < 4 && (score_day == 2 || Math.random() < 0.2)) {
             // console.log('new friend');
             score_npcs.push({
-                n: names.splice(~~(Math.random() * names.length), 1)[0],
-                t: 'f', i: 0, lv: 0
+                n: npc_names.splice(~~(Math.random() * npc_names.length), 1)[0],
+                t: 'f', i: 0, lv: 0,
+                c: npc_colors.splice(~~(Math.random() * npc_colors.length), 1)[0],
             })
         }
         //reset npc interactions
@@ -1163,7 +1183,7 @@ const small_talk = [
     "Good day",
     "I used to be an adventurer like you",
     "Got some'in interesting to sell?",
-    "Take care of yourself to go further",
+    "Take care of yourself to go further"
 ];
 const do_you_know = [
     `${_did_you_know}Sell treasure to the trader to get score`,
@@ -1171,8 +1191,8 @@ const do_you_know = [
     `${_did_you_know}Sell potions to trader to recover health`,
     `${_did_you_know}Hold Jump to jump higher`,
     `${_did_you_know}Hold the down button to use your shield`,
-    `${_did_you_know}Double tap forward to sprint with your shoes`,
-].map(a => 'Tips: ');
+    `${_did_you_know}Double tap forward to sprint with your shoes`
+].map(a => 'Tips: ' + a);
 const dialogPool = shuffleArray([...small_talk, ...small_talk, ...do_you_know]);
 
 // Inputs (see https://xem.github.io/articles/jsgamesinputs.html)
@@ -1740,7 +1760,7 @@ setInterval(() => {
             $c.fillRect((x - scroll_x) * tile_w + 4, (y - scroll_y) * tile_h + 6, w * tile_w - 8, h * tile_h - 8);
         }
         if (type == 'n') {
-            const { i, n, t, lv } = e.npc;
+            const { i, n, t, lv, c } = e.npc;
             const cx = x + w / 2 - scroll_x;
             const cy = y + h / 2 - scroll_y;
             const msg = t == 't' ? 'Press <Space> to trade' : tryQuestionMark(dialogPool[randomFromName(n, dialog_seed) % dialogPool.length]);
@@ -1756,7 +1776,7 @@ setInterval(() => {
             fillRectC($c, cx + fc * 0.2, cy + 0.09, w * 0.3, h * 0.1, 'gold');
 
             // body
-            fillRectC($c, cx, cy, w * 0.52, h * 0.65, '#ffe');
+            fillRectC($c, cx, cy, w * 0.52, h * 0.65, c);
             $c.fillStyle = "gold";
             $c.fillRect((x - scroll_x) * tile_w, (y - scroll_y) * tile_h, w * tile_w, h / 2 * tile_h);
             // eyes
