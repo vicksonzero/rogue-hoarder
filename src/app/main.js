@@ -663,7 +663,7 @@ let lostAbilities = [];
 // s = sell (item -> coin)
 // b = buy (coin -> slots)
 let trade_type = 's';
-let trade_heal_cost = 100; // multiply by 1.4 each time. 
+let trade_heal_cost = 500; // multiply by 1.4 each time. 
 // 100 * 1.4^5 = 537
 // 100 * 1.4^10 = 2892
 
