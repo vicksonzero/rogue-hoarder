@@ -669,7 +669,7 @@ let trade_heal_cost = 500; // multiply by 1.4 each time.
 
 let difficulty = 15;
 let difficulty_slope = 3;
-let dialog_seed = 0;
+let dialog_seed = 0;;
 
 let game_is_over = false;
 
